@@ -35,7 +35,7 @@ interface Props {
 
 export function ProductDetail({ product }: Props) {
   const { currency, language, country, t } = useLocale();
-  const { addToCart, toggleWishlist, isWishlisted, pushRecentlyViewed } = useStore();
+  const { addToCart, toggleWishlist, isWishlisted, pushRecentlyViewed, cartSubtotal } = useStore();
 
   const firstAvailable = product.variants.find((v) => v.inStock) || product.variants[0];
   const [selectedVariant, setSelectedVariant] = useState(firstAvailable);

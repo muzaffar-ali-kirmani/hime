@@ -117,12 +117,15 @@ export function Header() {
         {/* Right actions */}
         <div className="flex items-center gap-0.5 sm:gap-1">
           <Button
+            asChild
             variant="ghost"
             size="icon"
             aria-label="Search"
             className="hidden text-navy hover:bg-navy/5 sm:inline-flex"
           >
-            <Search className="size-[18px]" />
+            <Link href="/search">
+              <Search className="size-[18px]" />
+            </Link>
           </Button>
           <div className="hidden sm:block">
             <LocaleSwitcher />
