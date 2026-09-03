@@ -96,6 +96,7 @@ sqlite.exec(`
     gift_wrap INTEGER NOT NULL DEFAULT 0,
     gift_note TEXT,
     shipping_name TEXT NOT NULL,
+    shipping_email TEXT,
     shipping_phone TEXT NOT NULL,
     shipping_address1 TEXT NOT NULL,
     shipping_address2 TEXT,
@@ -104,6 +105,7 @@ sqlite.exec(`
     shipping_country TEXT NOT NULL,
     shipping_notes TEXT,
     tracking_number TEXT,
+    admin_notes TEXT,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     updated_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -162,6 +164,7 @@ sqlite.exec(`
     title TEXT,
     body TEXT NOT NULL,
     is_verified INTEGER NOT NULL DEFAULT 0,
+    is_approved INTEGER NOT NULL DEFAULT 1,
     created_at INTEGER NOT NULL DEFAULT (unixepoch()),
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -202,6 +205,26 @@ sqlite.exec(`
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
   );
   CREATE INDEX IF NOT EXISTS recently_user_idx ON recently_viewed(user_id);
+
+  CREATE TABLE IF NOT EXISTS homepage_sections (
+    id TEXT PRIMARY KEY,
+    section_key TEXT NOT NULL UNIQUE,
+    title TEXT,
+    subtitle TEXT,
+    body TEXT,
+    image_url TEXT,
+    cta_label TEXT,
+    cta_href TEXT,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
+
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    updated_at INTEGER NOT NULL DEFAULT (unixepoch())
+  );
 `);
 
 sqlite.close();

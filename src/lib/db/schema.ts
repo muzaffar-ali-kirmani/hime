@@ -112,6 +112,7 @@ export const orders = sqliteTable(
     giftWrap: integer("gift_wrap", { mode: "boolean" }).notNull().default(false),
     giftNote: text("gift_note"),
     shippingName: text("shipping_name").notNull(),
+    shippingEmail: text("shipping_email"),
     shippingPhone: text("shipping_phone").notNull(),
     shippingAddress1: text("shipping_address1").notNull(),
     shippingAddress2: text("shipping_address2"),
@@ -120,6 +121,7 @@ export const orders = sqliteTable(
     shippingCountry: text("shipping_country").notNull(),
     shippingNotes: text("shipping_notes"),
     trackingNumber: text("tracking_number"),
+    adminNotes: text("admin_notes"),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -216,6 +218,9 @@ export const reviews = sqliteTable(
     isVerified: integer("is_verified", { mode: "boolean" })
       .notNull()
       .default(false),
+    isApproved: integer("is_approved", { mode: "boolean" })
+      .notNull()
+      .default(true),
     createdAt: integer("created_at", { mode: "timestamp" })
       .notNull()
       .default(sql`(unixepoch())`),
@@ -224,6 +229,30 @@ export const reviews = sqliteTable(
     productIdx: index("reviews_product_idx").on(t.productId),
   })
 );
+
+export const homepageSections = sqliteTable("homepage_sections", {
+  id: text("id").primaryKey(),
+  sectionKey: text("section_key").notNull().unique(),
+  title: text("title"),
+  subtitle: text("subtitle"),
+  body: text("body"),
+  imageUrl: text("image_url"),
+  ctaLabel: text("cta_label"),
+  ctaHref: text("cta_href"),
+  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
+
+export const settings = sqliteTable("settings", {
+  key: text("key").primaryKey(),
+  value: text("value").notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .default(sql`(unixepoch())`),
+});
 
 export const addresses = sqliteTable(
   "addresses",
