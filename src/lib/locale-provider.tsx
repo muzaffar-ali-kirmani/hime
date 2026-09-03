@@ -73,7 +73,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const [country, setCountryState] = useState<Country>("AE");
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? localStorage.getItem("lune-locale") : null;
+    const stored = typeof window !== "undefined" ? localStorage.getItem("hime-locale") : null;
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
@@ -106,7 +106,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
 
   const persist = (state: { currency: Currency; language: Language; country: Country }) => {
     if (typeof window !== "undefined") {
-      localStorage.setItem("lune-locale", JSON.stringify(state));
+      localStorage.setItem("hime-locale", JSON.stringify(state));
     }
   };
 

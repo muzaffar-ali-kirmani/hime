@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import { db, schema } from "@/lib/db";
 import { eq, and, desc, asc, like, gte, lte, inArray, sql } from "drizzle-orm";
 import { apiSuccess, handleApiError } from "@/lib/api";

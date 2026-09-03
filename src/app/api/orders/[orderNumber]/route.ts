@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";

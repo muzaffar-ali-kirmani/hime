@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import { destroySession } from "@/lib/auth";
 import { apiSuccess } from "@/lib/api";
 

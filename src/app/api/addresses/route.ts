@@ -1,3 +1,4 @@
+export const runtime = "nodejs";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { requireUser } from "@/lib/auth";

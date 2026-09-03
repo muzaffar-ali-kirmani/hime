@@ -423,7 +423,7 @@ const seed = sqlite.transaction(() => {
     });
     productCount++;
 
-    for (const v of p.variants) {
+    for (const v of p.variants as any[]) {
       insertVariant.run({
         id: `${p.id}-${v.id}`,
         productId: p.id,

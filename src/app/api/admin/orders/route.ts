@@ -1,9 +1,9 @@
+export const runtime = "nodejs";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
-import { apiError, apiSuccess, generateId, handleApiError } from "@/lib/api";
-import { eq, and, desc } from "drizzle-orm";
-import { sql } from "drizzle-orm";
+import { apiError, apiSuccess, handleApiError } from "@/lib/api";
+import { eq, desc, type SQL } from "drizzle-orm";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
@@ -20,22 +20,18 @@ export async function GET(req: Request) {
     const status = url.searchParams.get("status");
     const limit = Number(url.searchParams.get("limit") || "50");
 
-    let query = db
+    const conditions: SQL[] = [];
+    if (status) {
+      conditions.push(eq(schema.orders.status, status));
+    }
+
+    const orders = await db
       .select()
       .from(schema.orders)
+      .where(conditions.length > 0 ? conditions[0] : undefined)
       .orderBy(desc(schema.orders.createdAt))
       .limit(limit);
 
-    if (status) {
-      query = db
-        .select()
-        .from(schema.orders)
-        .where(eq(schema.orders.status, status))
-        .orderBy(desc(schema.orders.createdAt))
-        .limit(limit);
-    }
-
-    const orders = await query;
     return apiSuccess({ orders });
   } catch (err) {
     return handleApiError(err);
