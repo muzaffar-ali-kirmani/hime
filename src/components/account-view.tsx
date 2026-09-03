@@ -49,7 +49,7 @@ interface Address {
 }
 
 export function AccountView() {
-  const { wishlist, savedDesigns, removeSavedDesign, user, isAuthenticated, refreshUser } = useStore();
+  const { wishlist, savedDesigns, removeSavedDesign, user, isAuthenticated, userLoading, refreshUser } = useStore();
   const { currency, language } = useLocale();
   const router = useRouter();
   const [tab, setTab] = useState("orders");
@@ -58,12 +58,13 @@ export function AccountView() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (userLoading) return;
     if (!isAuthenticated) {
       router.push("/login");
       return;
     }
     loadTabData();
-  }, [tab, isAuthenticated]);
+  }, [tab, isAuthenticated, userLoading]);
 
   async function loadTabData() {
     setLoading(true);
@@ -90,6 +91,16 @@ export function AccountView() {
     } catch (err) {
       toast.error("Failed to log out");
     }
+  }
+
+  if (userLoading) {
+    return (
+      <ShopLayout>
+        <section className="container-wide py-32 text-center">
+          <p className="text-sm text-navy/60">Loading…</p>
+        </section>
+      </ShopLayout>
+    );
   }
 
   if (!isAuthenticated || !user) {

@@ -1,14 +1,17 @@
 export const runtime = "nodejs";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, AuthError } from "@/lib/auth";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
 import { eq, desc, type SQL } from "drizzle-orm";
 
 async function requireAdmin() {
   const user = await getCurrentUser();
-  if (!user || !user.email.endsWith("@hime.jewellery")) {
-    throw new Error("Admin access required");
+  if (!user) {
+    throw new AuthError("Authentication required", 401);
+  }
+  if (!user.email.endsWith("@hime.jewellery")) {
+    throw new AuthError("Admin access required", 403);
   }
   return user;
 }
