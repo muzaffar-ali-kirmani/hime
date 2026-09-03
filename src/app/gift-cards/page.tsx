@@ -42,11 +42,11 @@ export default function GiftCardsPage() {
           <div className="rounded-3xl border border-border bg-gradient-to-br from-cream to-sand p-8">
             <div className="aspect-[3/2] rounded-2xl bg-navy p-6 text-cream shadow-xl">
               <p className="text-[10px] uppercase tracking-widest text-gold">
-                Lune Gift Card
+                Hime Gift Card
               </p>
               <p className="mt-3 font-serif text-3xl">$150</p>
               <p className="mt-auto pt-12 font-mono text-xs opacity-70">
-                LUNE · 9F23A1 · VALID 24 MONTHS
+                HIME · 9F23A1 · VALID 24 MONTHS
               </p>
             </div>
             <ul className="mt-6 space-y-2 text-sm text-navy/75">

@@ -1,7 +1,7 @@
 import { ShopLayout } from "@/components/shop-layout";
 
 export const metadata = {
-  title: "Terms of Service — Lune",
+  title: "Terms of Service — Hime",
 };
 
 export default function TermsPage() {
