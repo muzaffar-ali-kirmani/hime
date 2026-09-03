@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   User,
@@ -18,7 +18,9 @@ import { formatPrice } from "@/lib/locale";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/product-card";
-import { getProduct } from "@/lib/data";
+import { api } from "@/lib/api-client";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 const TABS = [
   { id: "orders", label: "Orders", icon: Package },
@@ -28,12 +30,83 @@ const TABS = [
   { id: "profile", label: "Profile", icon: Settings },
 ];
 
-export function AccountView() {
-  const { wishlist, savedDesigns, removeSavedDesign } = useStore();
-  const { currency, language } = useLocale();
-  const [tab, setTab] = useState("orders");
+interface Order {
+  id: string;
+  orderNumber: string;
+  status: string;
+  totalUsd: number;
+  createdAt: number;
+  items: any[];
+}
 
-  const wishlistProducts = wishlist.map(getProduct).filter(Boolean) as ReturnType<typeof getProduct>[];
+interface Address {
+  id: string;
+  label: string;
+  name: string;
+  address1: string;
+  city: string;
+  country: string;
+}
+
+export function AccountView() {
+  const { wishlist, savedDesigns, removeSavedDesign, user, isAuthenticated, refreshUser } = useStore();
+  const { currency, language } = useLocale();
+  const router = useRouter();
+  const [tab, setTab] = useState("orders");
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+    loadTabData();
+  }, [tab, isAuthenticated]);
+
+  async function loadTabData() {
+    setLoading(true);
+    try {
+      if (tab === "orders") {
+        const { orders } = await api.getMyOrders();
+        setOrders(orders);
+      } else if (tab === "addresses") {
+        const { addresses } = await api.getAddresses();
+        setAddresses(addresses);
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    try {
+      await api.logout();
+      await refreshUser();
+      router.push("/");
+    } catch (err) {
+      toast.error("Failed to log out");
+    }
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <ShopLayout>
+        <section className="container-wide py-20 text-center">
+          <h1 className="font-serif text-4xl text-navy">Sign in to your account</h1>
+          <Button
+            asChild
+            className="mt-6 rounded-full bg-navy px-7 py-5 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
+          >
+            <Link href="/login">Sign in</Link>
+          </Button>
+        </section>
+      </ShopLayout>
+    );
+  }
 
   return (
     <ShopLayout>
@@ -47,10 +120,16 @@ export function AccountView() {
               <p className="text-[10px] uppercase tracking-widest text-navy/60">
                 Welcome back
               </p>
-              <h1 className="font-serif text-3xl text-navy sm:text-4xl">Layla A.</h1>
+              <h1 className="font-serif text-3xl text-navy sm:text-4xl">
+                {user.firstName} {user.lastName}
+              </h1>
             </div>
           </div>
-          <Button variant="outline" className="rounded-full text-xs">
+          <Button
+            variant="outline"
+            className="rounded-full text-xs"
+            onClick={handleLogout}
+          >
             <LogOut className="me-2 size-3.5" /> Sign out
           </Button>
         </div>
@@ -74,10 +153,10 @@ export function AccountView() {
           </nav>
 
           <div>
-            {tab === "orders" && <OrdersPanel />}
+            {tab === "orders" && <OrdersPanel orders={orders} loading={loading} currency={currency} language={language} />}
             {tab === "wishlist" && (
               <div>
-                {wishlistProducts.length === 0 ? (
+                {wishlist.length === 0 ? (
                   <EmptyState
                     title="Your wishlist is empty"
                     desc="Tap the heart on any piece to save it for later."
@@ -85,11 +164,13 @@ export function AccountView() {
                     href="/shop"
                   />
                 ) : (
-                  <div className="grid grid-cols-2 gap-5 lg:grid-cols-3">
-                    {wishlistProducts.map((p) => p && (
-                      <ProductCard key={p.id} product={p} />
-                    ))}
-                  </div>
+                  <p className="text-sm text-navy/60">
+                    {wishlist.length} pieces saved. View on the{" "}
+                    <Link href="/wishlist" className="text-gold hover:underline">
+                      wishlist page
+                    </Link>
+                    .
+                  </p>
                 )}
               </div>
             )}
@@ -112,7 +193,8 @@ export function AccountView() {
                         <div>
                           <p className="font-medium text-navy">{d.productName}</p>
                           <p className="mt-1 text-xs text-navy/60">
-                            Saved {new Date(d.createdAt).toLocaleDateString()} ·{" "}
+                            Saved{" "}
+                            {new Date(d.createdAt).toLocaleDateString()} ·{" "}
                             {d.config.engraving && `"${d.config.engraving}"`}
                             {d.config.gemstone && ` · ${d.config.gemstone}`}
                           </p>
@@ -137,54 +219,45 @@ export function AccountView() {
             )}
             {tab === "addresses" && (
               <div className="space-y-3">
-                {[
-                  {
-                    label: "Home",
-                    name: "Layla Al Marzoqi",
-                    address: "Marina Heights, Apt 1204, Dubai Marina",
-                    city: "Dubai, UAE",
-                  },
-                  {
-                    label: "Office",
-                    name: "Layla Al Marzoqi",
-                    address: "DIFC Gate Village 7, Level 3",
-                    city: "Dubai, UAE",
-                  },
-                ].map((a, i) => (
-                  <div
-                    key={i}
-                    className="flex items-start justify-between rounded-2xl border border-border bg-card p-5"
-                  >
-                    <div>
-                      <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-navy">
-                        {a.label}
-                      </span>
-                      <p className="mt-3 font-medium text-navy">{a.name}</p>
-                      <p className="text-sm text-navy/70">{a.address}</p>
-                      <p className="text-sm text-navy/70">{a.city}</p>
+                {addresses.length === 0 ? (
+                  <EmptyState
+                    title="No saved addresses"
+                    desc="Save your address for faster checkout next time."
+                    cta="Add address"
+                    href="#"
+                  />
+                ) : (
+                  addresses.map((a) => (
+                    <div
+                      key={a.id}
+                      className="flex items-start justify-between rounded-2xl border border-border bg-card p-5"
+                    >
+                      <div>
+                        <span className="rounded-full bg-gold/15 px-2.5 py-1 text-[10px] font-medium uppercase tracking-widest text-navy">
+                          {a.label}
+                        </span>
+                        <p className="mt-3 font-medium text-navy">{a.name}</p>
+                        <p className="text-sm text-navy/70">{a.address1}</p>
+                        <p className="text-sm text-navy/70">
+                          {a.city}, {a.country}
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      Edit
-                    </Button>
-                  </div>
-                ))}
-                <Button variant="outline" className="rounded-full">
-                  + Add new address
-                </Button>
+                  ))
+                )}
               </div>
             )}
             {tab === "profile" && (
               <div className="space-y-4 rounded-2xl border border-border bg-card p-6">
                 <h3 className="font-serif text-2xl text-navy">Profile</h3>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <ProfileField label="First name" value="Layla" />
-                  <ProfileField label="Last name" value="Al Marzoqi" />
-                  <ProfileField label="Email" value="layla@example.com" />
-                  <ProfileField label="Phone" value="+971 50 123 4567" />
+                  <ProfileField label="First name" value={user.firstName} />
+                  <ProfileField label="Last name" value={user.lastName} />
+                  <ProfileField label="Email" value={user.email} />
                 </div>
-                <Button className="rounded-full bg-navy text-cream hover:bg-navy/90">
-                  Save changes
-                </Button>
+                <p className="text-xs text-navy/60">
+                  Profile editing coming soon.
+                </p>
               </div>
             )}
           </div>
@@ -194,32 +267,28 @@ export function AccountView() {
   );
 }
 
-function OrdersPanel() {
-  const { currency, language } = useLocale();
-  const orders = [
-    {
-      id: "LU-9F23A1",
-      date: "12 Mar 2026",
-      status: "In production",
-      total: 248,
-      items: 1,
-    },
-    {
-      id: "LU-7K11B4",
-      date: "28 Feb 2026",
-      status: "Delivered",
-      total: 159,
-      items: 1,
-    },
-    {
-      id: "LU-5Q88D2",
-      date: "14 Feb 2026",
-      status: "Delivered",
-      total: 348,
-      items: 2,
-    },
-  ];
-
+function OrdersPanel({
+  orders,
+  loading,
+  currency,
+  language,
+}: {
+  orders: Order[];
+  loading: boolean;
+  currency: any;
+  language: any;
+}) {
+  if (loading) return <p className="text-sm text-navy/60">Loading orders…</p>;
+  if (orders.length === 0) {
+    return (
+      <EmptyState
+        title="No orders yet"
+        desc="When you place an order, it'll appear here."
+        cta="Shop now"
+        href="/shop"
+      />
+    );
+  }
   return (
     <div className="space-y-3">
       {orders.map((o) => (
@@ -230,16 +299,18 @@ function OrdersPanel() {
           <div className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
             <div>
               <p className="text-[10px] uppercase tracking-widest text-navy/60">Order</p>
-              <p className="text-sm font-medium text-navy">#{o.id}</p>
+              <p className="text-sm font-medium text-navy">#{o.orderNumber}</p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest text-navy/60">Date</p>
-              <p className="text-sm text-navy">{o.date}</p>
+              <p className="text-sm text-navy">
+                {new Date(o.createdAt).toLocaleDateString()}
+              </p>
             </div>
             <div>
               <p className="text-[10px] uppercase tracking-widest text-navy/60">Total</p>
               <p className="text-sm text-navy">
-                {formatPrice(o.total, currency, language)}
+                {formatPrice(o.totalUsd, currency, language)}
               </p>
             </div>
             <div>
@@ -247,17 +318,19 @@ function OrdersPanel() {
               <span
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-widest",
-                  o.status === "Delivered"
+                  o.status === "delivered"
                     ? "bg-success/15 text-success"
+                    : o.status === "cancelled"
+                    ? "bg-destructive/15 text-destructive"
                     : "bg-gold/15 text-navy"
                 )}
               >
-                {o.status}
+                {o.status.replace("_", " ")}
               </span>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="rounded-full">
-            Track
+          <Button asChild variant="outline" size="sm" className="rounded-full">
+            <Link href={`/order/${o.orderNumber}`}>View</Link>
           </Button>
         </div>
       ))}
@@ -298,6 +371,7 @@ function ProfileField({ label, value }: { label: string; value: string }) {
       </label>
       <input
         defaultValue={value}
+        readOnly
         className="mt-1 h-10 w-full rounded-full border border-border bg-cream px-3 text-sm text-navy"
       />
     </div>

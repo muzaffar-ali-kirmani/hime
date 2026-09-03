@@ -1,8 +1,8 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback } from "react";
-import type { CartItem, SavedDesign, ProductVariant, Gemstone } from "./types";
-import { getProduct } from "./data";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import type { CartItem, SavedDesign, ProductVariant } from "./types";
+import { api } from "./api-client";
 
 interface StoreContextValue {
   cart: CartItem[];
@@ -22,6 +22,9 @@ interface StoreContextValue {
   pushRecentlyViewed: (productId: string) => void;
   cartCount: number;
   cartSubtotal: number;
+  isAuthenticated: boolean;
+  user: { id: string; email: string; firstName: string; lastName: string } | null;
+  refreshUser: () => Promise<void>;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -33,10 +36,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [user, setUser] = useState<StoreContextValue["user"]>(null);
+  const userRef = useRef<StoreContextValue["user"]>(null);
+  userRef.current = user;
 
   useEffect(() => {
     try {
-      const stored = localStorage.getItem("lune-store");
+      const stored = localStorage.getItem("hime-store");
       if (stored) {
         const parsed = JSON.parse(stored);
         setCart(parsed.cart || []);
@@ -51,10 +57,54 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!hydrated) return;
     localStorage.setItem(
-      "lune-store",
+      "hime-store",
       JSON.stringify({ cart, wishlist, savedDesigns, recentlyViewed })
     );
   }, [cart, wishlist, savedDesigns, recentlyViewed, hydrated]);
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const { user } = await api.me();
+      setUser(user);
+    } catch {
+      setUser(null);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [{ items }, { designs }] = await Promise.all([
+          api.getWishlist(),
+          api.getDesigns(),
+        ]);
+        if (cancelled) return;
+        if (items && Array.isArray(items)) {
+          setWishlist(items.map((i: any) => i.productId));
+        }
+        if (designs && Array.isArray(designs)) {
+          setSavedDesigns(
+            designs.map((d: any) => ({
+              id: d.id,
+              productId: d.productId || "",
+              productName: d.productName,
+              config: typeof d.config === "string" ? JSON.parse(d.config) : d.config,
+              createdAt: new Date(d.createdAt).getTime(),
+            }))
+          );
+        }
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   const addToCart = useCallback((item: Omit<CartItem, "id">) => {
     const id = `${item.productId}-${item.variant.id}-${Date.now()}`;
@@ -74,24 +124,57 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const clearCart = useCallback(() => setCart([]), []);
 
-  const toggleWishlist = useCallback((productId: string) => {
-    setWishlist((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
-    );
-  }, []);
+  const toggleWishlist = useCallback(
+    async (productId: string) => {
+      const wasIn = wishlist.includes(productId);
+      setWishlist((prev) =>
+        wasIn ? prev.filter((id) => id !== productId) : [...prev, productId]
+      );
+      if (userRef.current) {
+        try {
+          if (wasIn) {
+            await api.removeFromWishlist(productId);
+          } else {
+            await api.addToWishlist(productId);
+          }
+        } catch {}
+      }
+    },
+    [wishlist]
+  );
 
   const isWishlisted = useCallback(
     (productId: string) => wishlist.includes(productId),
     [wishlist]
   );
 
-  const saveDesign = useCallback((design: SavedDesign) => {
-    setSavedDesigns((prev) => [design, ...prev].slice(0, 20));
-  }, []);
+  const saveDesign = useCallback(
+    async (design: SavedDesign) => {
+      setSavedDesigns((prev) => [design, ...prev].slice(0, 20));
+      if (userRef.current) {
+        try {
+          await api.saveDesign({
+            productId: design.productId,
+            productName: design.productName,
+            config: design.config,
+          });
+        } catch {}
+      }
+    },
+    []
+  );
 
-  const removeSavedDesign = useCallback((id: string) => {
-    setSavedDesigns((prev) => prev.filter((d) => d.id !== id));
-  }, []);
+  const removeSavedDesign = useCallback(
+    async (id: string) => {
+      setSavedDesigns((prev) => prev.filter((d) => d.id !== id));
+      if (userRef.current) {
+        try {
+          await api.deleteDesign(id);
+        } catch {}
+      }
+    },
+    []
+  );
 
   const pushRecentlyViewed = useCallback((productId: string) => {
     setRecentlyViewed((prev) => {
@@ -123,6 +206,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         pushRecentlyViewed,
         cartCount,
         cartSubtotal,
+        isAuthenticated: !!user,
+        user,
+        refreshUser,
       }}
     >
       {children}
@@ -142,18 +228,14 @@ export function buildCartItem(args: {
   quantity: number;
   personalization?: CartItem["personalization"];
 }) {
-  const product = getProduct(args.productSlug);
-  if (!product) throw new Error("Product not found");
   return {
-    productId: product.id,
-    productSlug: product.slug,
-    name: product.name,
-    image: product.images[0],
+    productId: args.productSlug,
+    productSlug: args.productSlug,
+    name: args.productSlug,
+    image: "",
     variant: args.variant,
     personalization: args.personalization,
     quantity: args.quantity,
     unitPrice: args.variant.price + (args.personalization?.gemstone ? 15 : 0),
   };
 }
-
-export type { Gemstone };

@@ -12,6 +12,8 @@ import { useLocale } from "@/lib/locale-provider";
 import { formatPrice, COUNTRIES, CURRENCIES } from "@/lib/locale";
 import { ShopLayout } from "@/components/shop-layout";
 import { cn } from "@/lib/utils";
+import { api } from "@/lib/api-client";
+import { toast } from "sonner";
 
 const PAYMENT_METHODS = [
   { id: "card", label: "Credit / Debit Card", icon: CreditCard },
@@ -29,6 +31,8 @@ export function CheckoutView() {
   const [guestEmail, setGuestEmail] = useState("");
   const [isGuest, setIsGuest] = useState(true);
   const [orderComplete, setOrderComplete] = useState(false);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
     firstName: "",
@@ -46,6 +50,50 @@ export function CheckoutView() {
   const tax = cartSubtotal * 0.05;
   const total = cartSubtotal + shipping + tax;
 
+  async function placeOrder() {
+    setSubmitting(true);
+    try {
+      const items = cart.map((item) => ({
+        productId: item.productId.startsWith("custom-") ? null : item.productId,
+        productSlug: item.productSlug,
+        productName: item.name,
+        productImage: item.image,
+        variantId: item.variant.id,
+        metal: item.variant.metal,
+        lengthCm: item.variant.lengthCm || null,
+        size: item.variant.size || null,
+        unitPriceUsd: item.unitPrice,
+        quantity: item.quantity,
+        engravingText: item.personalization?.engravingText || null,
+        gemstone: item.personalization?.gemstone || null,
+        charmIds: item.personalization?.charmIds || null,
+      }));
+
+      const { orderNumber } = await api.createOrder({
+        email: guestEmail,
+        items,
+        shippingName: `${form.firstName} ${form.lastName}`.trim(),
+        shippingPhone: form.phone,
+        shippingAddress1: form.address1,
+        shippingAddress2: form.address2 || undefined,
+        shippingCity: form.city,
+        shippingArea: form.area || undefined,
+        shippingCountry: country,
+        shippingNotes: form.notes || undefined,
+        paymentMethod: payment,
+        currency,
+      });
+
+      setOrderNumber(orderNumber);
+      setOrderComplete(true);
+      clearCart();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to place order");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   if (orderComplete) {
     return (
       <ShopLayout>
@@ -56,8 +104,9 @@ export function CheckoutView() {
             </div>
             <h1 className="mt-5 font-serif text-4xl text-navy">Thank you</h1>
             <p className="mt-3 text-sm text-navy/70">
-              Your order #LU-{Math.random().toString(36).slice(2, 8).toUpperCase()} has been
-              placed. We'll email you as soon as it's hand-finished and ready to ship.
+              Your order <span className="font-mono font-semibold">{orderNumber}</span>{" "}
+              has been placed. We'll email you as soon as it's hand-finished and
+              ready to ship.
             </p>
             <Button
               asChild
@@ -99,13 +148,12 @@ export function CheckoutView() {
         </Link>
         <h1 className="font-serif text-4xl text-navy sm:text-5xl">{t("checkout")}</h1>
 
-        {/* Stepper */}
         <div className="my-6 flex items-center gap-3 text-xs">
           {[
               { id: "address", label: "1 · Address" },
               { id: "payment", label: "2 · Payment" },
               { id: "review", label: "3 · Review" },
-            ].map((s, i) => {
+            ].map((s) => {
               const active = step === s.id;
               const passed =
                 (s.id === "address" && step !== "address") ||
@@ -130,7 +178,6 @@ export function CheckoutView() {
 
         <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-6">
-            {/* Account toggle */}
             <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-sm">
               <button
                 onClick={() => setIsGuest(true)}
@@ -348,20 +395,17 @@ export function CheckoutView() {
                 </div>
 
                 <Button
-                  onClick={() => {
-                    setOrderComplete(true);
-                    clearCart();
-                  }}
+                  onClick={placeOrder}
+                  disabled={submitting}
                   className="w-full rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
                 >
-                  <Lock className="me-2 size-3.5" /> Place order ·{" "}
-                  {formatPrice(total, currency, language)}
+                  <Lock className="me-2 size-3.5" />{" "}
+                  {submitting ? "Placing order…" : `Place order · ${formatPrice(total, currency, language)}`}
                 </Button>
               </div>
             )}
           </div>
 
-          {/* Order summary */}
           <aside>
             <div className="sticky top-24 rounded-2xl border border-border bg-card p-6">
               <h3 className="font-serif text-xl text-navy">Order summary</h3>
