@@ -66,14 +66,6 @@ export function HeroModule() {
             />
           </div>
           {/* Floating accent */}
-          <div className="absolute -bottom-4 -left-4 hidden h-32 w-32 rounded-full border border-gold/30 bg-cream p-5 shadow-lg sm:flex sm:items-center sm:justify-center">
-            <div className="text-center">
-              <p className="font-serif text-2xl italic text-gold">15%</p>
-              <p className="text-[9px] uppercase tracking-widest text-navy">
-                Off first order
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </section>
