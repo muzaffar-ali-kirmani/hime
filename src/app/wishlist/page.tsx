@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { WishlistView } from "@/components/wishlist-view";
 
 export const metadata = {
-  title: "Wishlist — Lune",
+  title: "Wishlist — Hime",
 };
 
 export default function WishlistPage() {

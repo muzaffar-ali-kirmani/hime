@@ -102,7 +102,7 @@ export default function AboutPage() {
           </h2>
           <p className="mx-auto mt-4 max-w-md text-sm text-cream/70">
             From wax carving to final polish, our master jewellers hand-finish
-            every Lune piece. No two are exactly alike — and that's the point.
+            every Hime piece. No two are exactly alike — and that's the point.
           </p>
         </div>
       </section>
