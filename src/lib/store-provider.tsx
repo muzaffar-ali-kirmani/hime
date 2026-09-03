@@ -38,6 +38,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cartOpen, setCartOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const [user, setUser] = useState<StoreContextValue["user"]>(null);
+  const [userLoading, setUserLoading] = useState(true);
   const userRef = useRef<StoreContextValue["user"]>(null);
   userRef.current = user;
 
@@ -64,11 +65,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [cart, wishlist, savedDesigns, recentlyViewed, hydrated]);
 
   const refreshUser = useCallback(async () => {
+    setUserLoading(true);
     try {
       const { user } = await api.me();
       setUser(user);
     } catch {
       setUser(null);
+    } finally {
+      setUserLoading(false);
     }
   }, []);
 
@@ -209,6 +213,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         cartSubtotal,
         isAuthenticated: !!user,
         user,
+        userLoading,
         refreshUser,
       }}
     >

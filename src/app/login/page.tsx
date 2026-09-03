@@ -24,9 +24,11 @@ export default function LoginPage() {
     setSubmitting(true);
     try {
       await api.login(email, password);
-      await refreshUser();
+      const me = await api.me();
       toast.success("Welcome back");
-      router.push("/account");
+      const isAdmin = me.user?.email?.toLowerCase().endsWith("@hime.jewellery");
+      await refreshUser();
+      router.push(isAdmin ? "/admin" : "/account");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {

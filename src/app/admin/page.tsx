@@ -9,34 +9,69 @@ import { useStore } from "@/lib/store-provider";
 import { api } from "@/lib/api-client";
 
 export default function AdminPage() {
-  const { user, isAuthenticated } = useStore();
+  const { user, isAuthenticated, userLoading } = useStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [stats, setStats] = useState({ total: 0, pending: 0, revenue: 0 });
+  const [forbidden, setForbidden] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     (async () => {
       try {
-        const { orders } = await fetch("/api/admin/orders", {
-          credentials: "include",
-        }).then((r) => r.json());
+        const res = await fetch("/api/admin/orders", { credentials: "include" });
+        if (res.status === 403 || res.status === 401) {
+          setForbidden(true);
+          return;
+        }
+        const { orders } = await res.json();
         setOrders(orders || []);
         setStats({
           total: orders.length,
           pending: orders.filter((o: any) => o.status === "pending").length,
           revenue: orders.reduce((sum: number, o: any) => sum + o.totalUsd, 0),
         });
-      } catch {}
+      } catch {
+        setForbidden(true);
+      }
     })();
   }, [isAuthenticated]);
+
+  if (userLoading) {
+    return (
+      <ShopLayout>
+        <section className="container-wide py-32 text-center">
+          <p className="text-sm text-navy/60">Loading…</p>
+        </section>
+      </ShopLayout>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
       <ShopLayout>
         <section className="container-wide py-20 text-center">
           <h1 className="font-serif text-4xl text-navy">Sign in required</h1>
+          <p className="mt-2 text-sm text-navy/60">
+            Please sign in with an admin account to access this page.
+          </p>
           <Button asChild className="mt-4">
             <Link href="/login">Sign in</Link>
+          </Button>
+        </section>
+      </ShopLayout>
+    );
+  }
+
+  if (forbidden || !user?.email.endsWith("@hime.jewellery")) {
+    return (
+      <ShopLayout>
+        <section className="container-wide py-20 text-center">
+          <h1 className="font-serif text-4xl text-navy">Admin access required</h1>
+          <p className="mt-2 text-sm text-navy/60">
+            Your account ({user?.email}) does not have admin privileges.
+          </p>
+          <Button asChild className="mt-4">
+            <Link href="/">Back to home</Link>
           </Button>
         </section>
       </ShopLayout>

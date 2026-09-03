@@ -28,9 +28,11 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await api.signup(form);
+      const me = await api.me();
       await refreshUser();
       toast.success("Welcome to Hime");
-      router.push("/account");
+      const isAdmin = me.user?.email?.toLowerCase().endsWith("@hime.jewellery");
+      router.push(isAdmin ? "/admin" : "/account");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Signup failed");
     } finally {
