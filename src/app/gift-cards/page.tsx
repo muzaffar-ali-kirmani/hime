@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Gift Cards — Lune",
+  title: "Gift Cards — Hime",
 };
 
 export default function GiftCardsPage() {
@@ -19,7 +19,7 @@ export default function GiftCardsPage() {
             </p>
             <h1 className="font-serif text-5xl text-navy">A gift, on her terms.</h1>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-navy/75">
-              Not sure what to choose? A Lune gift card lets her pick exactly
+              Not sure what to choose? A Hime gift card lets her pick exactly
               what she wants — even a custom-designed piece. Delivered
               instantly by email or WhatsApp.
             </p>

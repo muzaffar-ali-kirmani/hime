@@ -66,9 +66,7 @@ export function Footer() {
               Designed in the Gulf, crafted to last.
             </p>
             <form className="space-y-3">
-              <p className="text-[11px] font-medium uppercase tracking-widest text-navy">
-                {t("sign.up.discount")}
-              </p>
+              <></>
               <div className="flex max-w-sm gap-2">
                 <Input
                   type="email"
@@ -139,13 +137,7 @@ export function Footer() {
         {/* Trust bar */}
         <div className="mt-12 grid grid-cols-2 gap-4 border-t border-border/40 pt-8 text-xs text-navy/70 sm:grid-cols-4">
           <div className="flex items-center gap-2">
-            <span className="text-gold">✦</span> 18K & 925 Hallmarked
-          </div>
-          <div className="flex items-center gap-2">
             <span className="text-gold">✦</span> Free Gulf Shipping
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-gold">✦</span> 30-day Returns
           </div>
           <div className="flex items-center gap-2">
             <span className="text-gold">✦</span> Hypoallergenic

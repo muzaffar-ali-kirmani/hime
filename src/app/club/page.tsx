@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Lune Jewellery Club — Lune",
+  title: "Hime Jewellery Club — Hime",
 };
 
 export default function ClubPage() {
@@ -14,7 +14,7 @@ export default function ClubPage() {
         <div className="rounded-3xl bg-gradient-to-br from-navy to-navy/95 px-6 py-14 text-center text-cream sm:px-12 sm:py-16">
           <Crown className="mx-auto size-10 text-gold" strokeWidth={1.2} />
           <h1 className="mt-4 font-serif text-5xl sm:text-6xl">
-            The Lune Club
+            The Hime Club
           </h1>
           <p className="mx-auto mt-3 max-w-md text-sm text-cream/70">
             Free to join. Earn points on every order, get first access to new
