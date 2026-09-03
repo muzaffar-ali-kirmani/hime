@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { Truck, RefreshCcw, Globe, Clock } from "lucide-react";
 
 export const metadata = {
-  title: "Shipping & Returns — Lune",
+  title: "Shipping & Returns — Hime",
 };
 
 export default function ShippingPage() {

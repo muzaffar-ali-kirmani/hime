@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { Ruler } from "lucide-react";
 
 export const metadata = {
-  title: "Size Guide — Lune",
+  title: "Size Guide — Hime",
 };
 
 export default function SizeGuidePage() {

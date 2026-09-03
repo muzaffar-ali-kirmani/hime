@@ -19,7 +19,7 @@ export default function TermsPage() {
 
           <div className="space-y-6 text-sm leading-relaxed text-navy/80">
             <p>
-              By using lune.jewellery you agree to the following terms. We may
+              By using hime.jewellery you agree to the following terms. We may
               update these terms from time to time — we'll always notify you of
               material changes.
             </p>
@@ -46,7 +46,7 @@ export default function TermsPage() {
 
             <h2 className="font-serif text-2xl text-navy">Warranty</h2>
             <p>
-              All Lune pieces come with a 1-year warranty against manufacturing
+              All Hime pieces come with a 1-year warranty against manufacturing
               defects. This does not cover wear and tear, accidental damage,
               or loss.
             </p>

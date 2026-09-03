@@ -1,7 +1,7 @@
 import { ShopLayout } from "@/components/shop-layout";
 
 export const metadata = {
-  title: "Privacy Policy — Lune",
+  title: "Privacy Policy — Hime",
 };
 
 export default function PrivacyPage() {
@@ -19,7 +19,7 @@ export default function PrivacyPage() {
 
           <div className="space-y-6 text-sm leading-relaxed text-navy/80">
             <p>
-              At Lune, we respect your privacy and are committed to protecting
+              At Hime, we respect your privacy and are committed to protecting
               your personal data. This policy explains how we collect, use and
               safeguard your information when you visit our website or make a
               purchase.
@@ -46,8 +46,8 @@ export default function PrivacyPage() {
             <p>
               You have the right to access, correct or delete your personal
               data at any time. Contact us at{" "}
-              <a href="mailto:privacy@lune.jewellery" className="text-gold hover:underline">
-                privacy@lune.jewellery
+              <a href="mailto:privacy@hime.jewellery" className="text-gold hover:underline">
+                privacy@hime.jewellery
               </a>{" "}
               to exercise these rights.
             </p>

@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { Sparkles, Droplets, Shield } from "lucide-react";
 
 export const metadata = {
-  title: "Jewellery Care — Lune",
+  title: "Jewellery Care — Hime",
 };
 
 export default function CarePage() {
@@ -15,7 +15,7 @@ export default function CarePage() {
           </p>
           <h1 className="font-serif text-5xl text-navy">Keep it shining</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-navy/65">
-            A few small habits will keep your Lune piece looking brand new
+            A few small habits will keep your Hime piece looking brand new
             for years to come.
           </p>
         </header>
