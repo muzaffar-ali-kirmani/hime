@@ -57,7 +57,7 @@ export function Header() {
           </SheetTrigger>
           <SheetContent side="left" className="w-[88vw] max-w-sm bg-cream p-0">
             <SheetHeader className="border-b border-border/50 p-5">
-              <SheetTitle className="font-serif text-2xl text-navy">Lune</SheetTitle>
+              <SheetTitle className="font-serif text-2xl text-navy">Hime</SheetTitle>
             </SheetHeader>
             <nav className="flex flex-col p-4">
               {navItems.map((item) => (
@@ -94,7 +94,7 @@ export function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center">
           <span className="font-serif text-2xl font-medium tracking-tight text-navy sm:text-3xl">
-            Lune
+            Hime
           </span>
         </Link>
 
