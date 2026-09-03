@@ -48,9 +48,7 @@ export function HeroModule() {
             </Button>
           </div>
           <div className="flex items-center justify-center gap-5 pt-3 text-[10px] uppercase tracking-widest text-navy/55 lg:justify-start">
-            <span className="flex items-center gap-1.5">✦ 18K Hallmarked</span>
             <span className="flex items-center gap-1.5">✦ Free Gulf Shipping</span>
-            <span className="hidden items-center gap-1.5 sm:flex">✦ 30-day Returns</span>
           </div>
         </div>
 
