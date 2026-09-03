@@ -4,8 +4,8 @@ import { ShopLayout } from "@/components/shop-layout";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "Our Story — Lune",
-  description: "The story behind Lune — hand-finished personalised jewellery made for her.",
+  title: "Our Story — Hime",
+  description: "The story behind Hime — hand-finished personalised jewellery made for her.",
 };
 
 export default function AboutPage() {
@@ -21,13 +21,13 @@ export default function AboutPage() {
               Made for her story.
             </h1>
             <p className="mt-5 text-base leading-relaxed text-navy/75">
-              Lune was born out of a simple wish — that the women we love
+              Hime was born out of a simple wish — that the women we love
               should wear something that carries a piece of them. We started
               in a small atelier between Dubai and Riyadh, hand-finishing
               engraved pendants for the women who matter most in our lives.
             </p>
             <p className="mt-3 text-base leading-relaxed text-navy/75">
-              Today, every Lune piece is set and polished by hand in 18K
+              Today, every Hime piece is set and polished by hand in 18K
               gold or 925 sterling silver. We don't make fast jewellery —
               we make the kind you reach for every day. The kind you pass
               down.

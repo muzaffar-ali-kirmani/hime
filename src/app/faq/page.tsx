@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/accordion";
 
 export const metadata = {
-  title: "FAQ — Lune",
+  title: "FAQ — Hime",
 };
 
 const FAQ_GROUPS = [
@@ -71,7 +71,7 @@ const FAQ_GROUPS = [
       },
       {
         q: "Are your pieces hypoallergenic?",
-        a: "Yes — all Lune pieces are nickel-free and hypoallergenic, kind to sensitive ears and skin.",
+        a: "Yes — all Hime pieces are nickel-free and hypoallergenic, kind to sensitive ears and skin.",
       },
       {
         q: "How do I care for my jewellery?",
