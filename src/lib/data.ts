@@ -1,4 +1,4 @@
-import type { Product, Gemstone, MetalFinish } from "./types";
+import type { Product, MetalFinish } from "./types";
 
 const swatchGradient = (metal: MetalFinish) => {
   switch (metal) {
@@ -24,7 +24,6 @@ export const CATEGORIES = [
   { id: "rings", name: "Rings", nameAr: "الخواتم", image: svgImage("Ring", "gold", "ring") },
   { id: "earrings", name: "Earrings", nameAr: "الأقراط", image: svgImage("Earrings", "silver", "earrings") },
   { id: "anklets", name: "Anklets", nameAr: "الخلاخيل", image: svgImage("Anklet", "gold", "anklet") },
-  { id: "initial-charm", name: "Initials & Charms", nameAr: "الحروف الأولى", image: svgImage("Initials", "rose-gold", "initial") },
 ] as const;
 
 export const OCCASIONS = [
@@ -39,37 +38,26 @@ export const OCCASIONS = [
   "Just Because",
 ];
 
-export const GEMSTONES: { id: Gemstone; name: string; hex: string; birthMonth: string }[] = [
-  { id: "diamond", name: "Diamond", hex: "#F0F0F0", birthMonth: "April" },
-  { id: "sapphire", name: "Sapphire", hex: "#1E3A8A", birthMonth: "September" },
-  { id: "ruby", name: "Ruby", hex: "#B91C1C", birthMonth: "July" },
-  { id: "emerald", name: "Emerald", hex: "#047857", birthMonth: "May" },
-  { id: "amethyst", name: "Amethyst", hex: "#7C3AED", birthMonth: "February" },
-  { id: "pearl", name: "Pearl", hex: "#F5F5DC", birthMonth: "June" },
-  { id: "garnet", name: "Garnet", hex: "#991B1B", birthMonth: "January" },
-  { id: "topaz", name: "Topaz", hex: "#F59E0B", birthMonth: "November" },
-  { id: "aquamarine", name: "Aquamarine", hex: "#7DD3FC", birthMonth: "March" },
-  { id: "opal", name: "Opal", hex: "#FBCFE8", birthMonth: "October" },
-  { id: "turquoise", name: "Turquoise", hex: "#14B8A6", birthMonth: "December" },
-];
 
 const metals: MetalFinish[] = ["gold", "rose-gold", "silver"];
 
+// All metal finishes are priced the same.
 const makeVariants = (base: number) =>
   metals.map((metal) => ({
     id: `${metal}`,
     metal,
-    price: base + (metal === "rose-gold" ? 15 : metal === "silver" ? -25 : 0),
+    price: base,
     inStock: true,
   }));
 
+// All metal finishes are priced the same.
 const makeLengthVariants = (base: number, lengths: number[]) =>
   metals.flatMap((metal) =>
     lengths.map((l) => ({
       id: `${metal}-${l}`,
       metal,
       lengthCm: l,
-      price: base + (metal === "rose-gold" ? 15 : metal === "silver" ? -25 : 0),
+      price: base,
       inStock: true,
     }))
   );
@@ -92,7 +80,6 @@ export const PRODUCTS: Product[] = [
     variants: makeLengthVariants(189, [40, 45, 50]),
     personalization: {
       engraving: { maxLength: 1, placeholder: "A" },
-      gemstone: true,
       length: { options: [40, 45, 50], default: 45 },
     },
     materials: ["18K Gold Vermeil", "Sterling Silver Core"],
@@ -117,7 +104,6 @@ export const PRODUCTS: Product[] = [
     reviewCount: 184,
     variants: makeLengthVariants(229, [40, 45, 50]),
     personalization: {
-      gemstone: true,
       engraving: { maxLength: 12, placeholder: "Engrave a name" },
       length: { options: [40, 45, 50], default: 45 },
     },
@@ -153,32 +139,6 @@ export const PRODUCTS: Product[] = [
     occasion: ["Anniversary", "Just Because"],
   },
   {
-    id: "p-004",
-    slug: "rosa-charm-bracelet",
-    name: "Rosa Charm Bracelet",
-    nameAr: "سوار روزا بالقلائد",
-    description:
-      "Mix, match, make it yours. The Rosa Charm Bracelet is the start of a story — add initials, birthstones and tiny talismans, one for every chapter.",
-    category: "bracelets",
-    basePrice: 119,
-    currency: "USD",
-    images: [svgImage("Rosa", "rose-gold", "CHARMS")],
-    badge: "bestseller",
-    rating: 4.8,
-    reviewCount: 567,
-    variants: makeLengthVariants(119, [16, 18, 20]),
-    personalization: {
-      charm: true,
-      engraving: { maxLength: 8, placeholder: "Add a word" },
-      length: { options: [16, 18, 20], default: 18 },
-    },
-    materials: ["18K Rose Gold Vermeil"],
-    careInstructions: "Store dry. Polish gently with the included cloth.",
-    isHypoallergenic: true,
-    tags: ["charm", "engravable", "stackable"],
-    occasion: ["Birthday", "Anniversary", "Just Because"],
-  },
-  {
     id: "p-005",
     slug: "safa-signet-ring",
     name: "Safa Signet Ring",
@@ -196,9 +156,9 @@ export const PRODUCTS: Product[] = [
       { id: "gold-6", metal: "gold", size: "6", price: 269, inStock: true },
       { id: "gold-7", metal: "gold", size: "7", price: 269, inStock: true },
       { id: "gold-8", metal: "gold", size: "8", price: 269, inStock: true },
-      { id: "silver-6", metal: "silver", size: "6", price: 219, inStock: true },
-      { id: "silver-7", metal: "silver", size: "7", price: 219, inStock: true },
-      { id: "silver-8", metal: "silver", size: "8", price: 219, inStock: false, madeToOrder: true, productionDays: "10–14 days" },
+      { id: "silver-6", metal: "silver", size: "6", price: 269, inStock: true },
+      { id: "silver-7", metal: "silver", size: "7", price: 269, inStock: true },
+      { id: "silver-8", metal: "silver", size: "8", price: 269, inStock: false, madeToOrder: true, productionDays: "10–14 days" },
     ],
     personalization: {
       engraving: { maxLength: 2, placeholder: "AB" },
@@ -277,32 +237,6 @@ export const PRODUCTS: Product[] = [
     isHypoallergenic: true,
     tags: ["tennis", "silver", "everyday"],
     occasion: ["Wedding", "Anniversary"],
-  },
-  {
-    id: "p-009",
-    slug: "layla-charm-set",
-    name: "Layla Charm Set",
-    nameAr: "طقم ليلى بالقلائد",
-    description:
-      "Three charms, one story. The Layla Charm Set comes with a heart, an initial and a birthstone — designed to layer with our Rosa Bracelet.",
-    category: "initial-charm",
-    basePrice: 79,
-    currency: "USD",
-    images: [svgImage("Layla", "rose-gold", "CHARM SET")],
-    badge: "sale",
-    compareAtPrice: 99,
-    rating: 4.8,
-    reviewCount: 234,
-    variants: makeVariants(79),
-    personalization: {
-      engraving: { maxLength: 1, placeholder: "A" },
-      charm: true,
-    },
-    materials: ["18K Rose Gold Vermeil"],
-    careInstructions: "Store dry in original pouch.",
-    isHypoallergenic: true,
-    tags: ["charm", "engravable", "set"],
-    occasion: ["Birthday", "Just Because"],
   },
   {
     id: "p-010",
@@ -390,7 +324,7 @@ export const FEATURED_COLLECTIONS = [
     id: "best-sellers",
     title: "Best Sellers",
     subtitle: "Loved by women across the Gulf",
-    productIds: ["p-001", "p-004", "p-005", "p-009"],
+    productIds: ["p-001", "p-003", "p-005", "p-006"],
   },
   {
     id: "engravable",
@@ -420,7 +354,7 @@ export const TESTIMONIALS = [
     location: "Doha, Qatar",
     rating: 5,
     text: "I've never worn jewellery this personal. The customizer is so easy — I designed something just for me.",
-    product: "Rosa Charm Bracelet",
+    product: "Custom Design",
   },
   {
     name: "Hessa B.",
@@ -436,7 +370,6 @@ export const TRUST_BADGES = [
   { title: "18K & 925 Hallmarked", description: "Authentic, certified metals — purity you can trust." },
   { title: "Hypoallergenic", description: "Nickel-free, kind to sensitive skin." },
   { title: "Free Gulf Shipping", description: "Complimentary delivery across all six GCC countries." },
-  { title: "30-day Returns", description: "Generous, no-questions-asked exchange policy." },
   { title: "Made-to-order", description: "Handcrafted in 5–7 days, just for her." },
 ];
 
@@ -447,15 +380,6 @@ export function getProduct(slug: string) {
 export function getCategoryProducts(categoryId: string) {
   return PRODUCTS.filter((p) => p.category === categoryId);
 }
-
-export const CHARMS = [
-  { id: "heart", name: "Heart Charm", price: 25, symbol: "♥" },
-  { id: "moon", name: "Moon Charm", price: 25, symbol: "☾" },
-  { id: "star", name: "Star Charm", price: 20, symbol: "★" },
-  { id: "flower", name: "Flower Charm", price: 22, symbol: "✿" },
-  { id: "pearl", name: "Pearl Drop", price: 28, symbol: "❀" },
-  { id: "initial", name: "Initial Charm", price: 24, symbol: "A" },
-];
 
 export const ENGRAVING_FONTS = [
   { id: "classic", name: "Classic Serif", sample: "Aa" },

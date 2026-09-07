@@ -1,7 +1,7 @@
 import { CartView } from "@/components/cart-view";
 
 export const metadata = {
-  title: "Your Bag — Lune",
+  title: "Your Bag — Hime",
 };
 
 export default function CartPage() {

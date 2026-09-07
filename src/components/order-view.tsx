@@ -171,6 +171,12 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
                 <dt>VAT</dt>
                 <dd>{formatPrice(order.taxUsd, currency, language)}</dd>
               </div>
+              {order.bulkDiscount > 0 && (
+                <div className="flex justify-between text-success">
+                  <dt>Bulk discount (20% on 2+ items)</dt>
+                  <dd>-{formatPrice(order.bulkDiscount, currency, language)}</dd>
+                </div>
+              )}
               {order.promoDiscount > 0 && (
                 <div className="flex justify-between text-success">
                   <dt>Promo ({order.promoCode})</dt>

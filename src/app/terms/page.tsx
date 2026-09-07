@@ -41,7 +41,7 @@ export default function TermsPage() {
             <h2 className="font-serif text-2xl text-navy">Personalised pieces</h2>
             <p>
               Engraved and personalised pieces are made to order and cannot be
-              refunded. They can be exchanged within 14 days if unworn.
+              refunded or exchanged.
             </p>
 
             <h2 className="font-serif text-2xl text-navy">Warranty</h2>

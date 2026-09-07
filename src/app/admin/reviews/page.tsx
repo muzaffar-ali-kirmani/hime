@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Star, Trash2, CheckCircle, EyeOff, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -13,10 +14,16 @@ export default function AdminReviewsPage() {
 
   async function load() {
     setLoading(true);
-    const res = await fetch("/api/admin/reviews", { credentials: "include" });
-    const data = await res.json();
-    setReviews(data.reviews || []);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/admin/reviews", { credentials: "include" });
+      const data = await res.json();
+      setReviews(data.reviews || []);
+    } catch {
+      toast.error("Could not load reviews");
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -35,7 +42,6 @@ export default function AdminReviewsPage() {
   }
 
   async function deleteReview(r: any) {
-    if (!confirm(`Delete review by ${r.authorName}?`)) return;
     await fetch(`/api/admin/reviews/${r.id}`, {
       method: "DELETE",
       credentials: "include",
@@ -145,14 +151,22 @@ export default function AdminReviewsPage() {
                       <CheckCircle className="me-1.5 size-3" /> Approve
                     </Button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => deleteReview(r)}
-                    className="rounded-full text-destructive"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full text-destructive"
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    }
+                    title={`Delete review by ${r.authorName}?`}
+                    description="This will permanently remove the review."
+                    confirmLabel="Delete"
+                    destructive
+                    onConfirm={() => deleteReview(r)}
+                  />
                 </div>
               </div>
             </div>

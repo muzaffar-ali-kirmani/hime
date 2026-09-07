@@ -1,8 +1,10 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, useMemo } from "react";
 import type { CartItem, SavedDesign, ProductVariant } from "./types";
 import { api } from "./api-client";
+import { DEFAULT_SETTINGS, type StoreSettings } from "./settings";
+import { bulkDiscountForCart } from "./pricing";
 
 interface StoreContextValue {
   cart: CartItem[];
@@ -10,6 +12,7 @@ interface StoreContextValue {
   savedDesigns: SavedDesign[];
   cartOpen: boolean;
   setCartOpen: (open: boolean) => void;
+  settings: StoreSettings;
   addToCart: (item: Omit<CartItem, "id">) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, qty: number) => void;
@@ -22,6 +25,7 @@ interface StoreContextValue {
   pushRecentlyViewed: (productId: string) => void;
   cartCount: number;
   cartSubtotal: number;
+  cartBulkDiscount: number;
   isAuthenticated: boolean;
   user: { id: string; email: string; firstName: string; lastName: string } | null;
   userLoading: boolean;
@@ -36,6 +40,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [savedDesigns, setSavedDesigns] = useState<SavedDesign[]>([]);
   const [recentlyViewed, setRecentlyViewed] = useState<string[]>([]);
   const [cartOpen, setCartOpen] = useState(false);
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
   const [hydrated, setHydrated] = useState(false);
   const [user, setUser] = useState<StoreContextValue["user"]>(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -79,6 +84,26 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
+
+  // Store config used for pricing (VAT, shipping thresholds, announcement).
+  // Refreshes when the tab regains focus so admin setting changes show up
+  // without a hard reload.
+  useEffect(() => {
+    let cancelled = false;
+    async function loadSettings() {
+      try {
+        const res = await fetch("/api/settings", { cache: "no-store" });
+        const data = await res.json();
+        if (!cancelled && data.settings) setSettings(data.settings);
+      } catch {}
+    }
+    loadSettings();
+    window.addEventListener("focus", loadSettings);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("focus", loadSettings);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -189,7 +214,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const cartCount = cart.reduce((sum, i) => sum + i.quantity, 0);
-  const cartSubtotal = cart.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0);
+
+  // Cart-wide bulk discount: 2+ items in total gets 20% off the whole order.
+  // cartSubtotal stays the full pre-discount amount so the discount can be
+  // shown once, as its own line, before the total.
+  const cartSubtotal = cart.reduce(
+    (sum, i) => sum + i.unitPrice * i.quantity,
+    0
+  );
+  const cartBulkDiscount = useMemo(
+    () => bulkDiscountForCart(cart),
+    [cart]
+  );
 
   return (
     <StoreContext.Provider
@@ -199,6 +235,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         savedDesigns,
         cartOpen,
         setCartOpen,
+        settings,
         addToCart,
         removeFromCart,
         updateQuantity,
@@ -211,6 +248,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         pushRecentlyViewed,
         cartCount,
         cartSubtotal,
+        cartBulkDiscount,
         isAuthenticated: !!user,
         user,
         userLoading,

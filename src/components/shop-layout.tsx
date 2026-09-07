@@ -1,3 +1,4 @@
+// Storefront chrome: announcement bar, header, footer, cart drawer.
 import { AnnouncementBar } from "@/components/announcement-bar";
 import { Header } from "@/components/header";
 import { Footer } from "@/components/footer";

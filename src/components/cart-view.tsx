@@ -7,25 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
-import {
-  formatPrice,
-  FREE_SHIPPING_THRESHOLD_USD,
-  STANDARD_SHIPPING_USD,
-} from "@/lib/locale";
+import { formatPrice } from "@/lib/locale";
 import { useState } from "react";
 import { ShopLayout } from "@/components/shop-layout";
 
 export function CartView() {
-  const { cart, removeFromCart, updateQuantity, cartSubtotal } = useStore();
+  const { cart, removeFromCart, updateQuantity, cartSubtotal, cartBulkDiscount, settings } = useStore();
   const { currency, language, t } = useLocale();
   const [promo, setPromo] = useState("");
   const [giftWrap, setGiftWrap] = useState(false);
   const [giftNote, setGiftNote] = useState("");
 
-  const remaining = Math.max(0, FREE_SHIPPING_THRESHOLD_USD - cartSubtotal);
-  const progress = Math.min(100, (cartSubtotal / FREE_SHIPPING_THRESHOLD_USD) * 100);
-  const shipping = cartSubtotal >= FREE_SHIPPING_THRESHOLD_USD ? 0 : STANDARD_SHIPPING_USD;
-  const total = cartSubtotal + shipping + (giftWrap ? 8 : 0);
+  const discountedSubtotal = cartSubtotal - cartBulkDiscount;
+  const shippingEnabled = settings.shippingEnabled;
+  const remaining = shippingEnabled
+    ? Math.max(0, settings.freeShippingThreshold - discountedSubtotal)
+    : 0;
+  const progress = shippingEnabled
+    ? Math.min(100, (discountedSubtotal / settings.freeShippingThreshold) * 100)
+    : 100;
+  const shipping =
+    !shippingEnabled ||
+    discountedSubtotal >= settings.freeShippingThreshold
+      ? 0
+      : settings.standardShippingUsd;
+  const total = cartSubtotal - cartBulkDiscount + shipping + (giftWrap ? 8 : 0);
 
   return (
     <ShopLayout>
@@ -56,7 +62,9 @@ export function CartView() {
               <div className="rounded-2xl border border-border bg-card p-5">
                 <div className="mb-4 flex items-center justify-between">
                   <p className="text-xs uppercase tracking-widest text-navy/60">
-                    {remaining > 0
+                    {!shippingEnabled
+                      ? "✨ Free shipping on every order"
+                      : remaining > 0
                       ? `Add ${formatPrice(remaining, currency, language)} more for free shipping`
                       : "✨ Free shipping unlocked"}
                   </p>
@@ -138,9 +146,11 @@ export function CartView() {
                             <Plus className="size-3 text-navy" />
                           </button>
                         </div>
-                        <p className="text-sm font-semibold text-navy">
-                          {formatPrice(item.unitPrice * item.quantity, currency, language)}
-                        </p>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-navy">
+                            {formatPrice(item.unitPrice * item.quantity, currency, language)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -192,6 +202,14 @@ export function CartView() {
                       {shipping === 0 ? "Free" : formatPrice(shipping, currency, language)}
                     </dd>
                   </div>
+                  {cartBulkDiscount > 0 && (
+                    <div className="flex justify-between text-success">
+                      <dt className="text-navy/70">Bulk discount (20% on 2+ items)</dt>
+                      <dd className="text-navy">
+                        -{formatPrice(cartBulkDiscount, currency, language)}
+                      </dd>
+                    </div>
+                  )}
                   {giftWrap && (
                     <div className="flex justify-between">
                       <dt className="text-navy/70">Gift wrap</dt>
@@ -213,7 +231,7 @@ export function CartView() {
                   </Link>
                 </Button>
                 <p className="text-center text-xs text-navy/55">
-                  ✦ Secure checkout · 30-day returns
+                  ✦ Secure checkout
                 </p>
               </div>
             </aside>

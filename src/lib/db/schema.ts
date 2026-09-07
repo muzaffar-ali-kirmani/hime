@@ -1,7 +1,17 @@
-import { sqliteTable, text, integer, real, index } from "drizzle-orm/sqlite-core";
+import {
+  pgTable,
+  text,
+  integer,
+  real,
+  boolean,
+  timestamp,
+  jsonb,
+  index,
+  uniqueIndex,
+} from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const users = sqliteTable("users", {
+export const users = pgTable("users", {
   id: text("id").primaryKey(),
   email: text("email").notNull().unique(),
   passwordHash: text("password_hash").notNull(),
@@ -9,23 +19,23 @@ export const users = sqliteTable("users", {
   lastName: text("last_name").notNull(),
   phone: text("phone"),
   country: text("country").default("AE"),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`now()`),
 });
 
-export const sessions = sqliteTable("sessions", {
+export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
-  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-  createdAt: integer("created_at", { mode: "timestamp" })
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`now()`),
 });
 
-export const products = sqliteTable(
+export const products = pgTable(
   "products",
   {
     id: text("id").primaryKey(),
@@ -38,30 +48,26 @@ export const products = sqliteTable(
     basePrice: real("base_price").notNull(),
     compareAtPrice: real("compare_at_price"),
     currency: text("currency").notNull().default("USD"),
-    images: text("images", { mode: "json" }).$type<string[]>().notNull(),
+    images: jsonb("images").$type<string[]>().notNull(),
     badge: text("badge"),
     rating: real("rating").notNull().default(0),
     reviewCount: integer("review_count").notNull().default(0),
-    materials: text("materials", { mode: "json" }).$type<string[]>().notNull(),
+    materials: jsonb("materials").$type<string[]>().notNull(),
     careInstructions: text("care_instructions").notNull(),
-    isHalalFriendly: integer("is_halal_friendly", { mode: "boolean" })
-      .notNull()
-      .default(false),
-    isHypoallergenic: integer("is_hypoallergenic", { mode: "boolean" })
-      .notNull()
-      .default(false),
-    tags: text("tags", { mode: "json" }).$type<string[]>().notNull(),
-    occasion: text("occasion", { mode: "json" }).$type<string[]>(),
-    personalization: text("personalization", { mode: "json" }).$type<{
+    isHalalFriendly: boolean("is_halal_friendly").notNull().default(false),
+    isHypoallergenic: boolean("is_hypoallergenic").notNull().default(false),
+    tags: jsonb("tags").$type<string[]>().notNull(),
+    occasion: jsonb("occasion").$type<string[]>(),
+    personalization: jsonb("personalization").$type<{
       engraving?: { maxLength: number; placeholder: string };
       gemstone?: boolean;
       charm?: boolean;
       length?: { options: number[]; default: number };
     }>(),
-    isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     categoryIdx: index("products_category_idx").on(t.category),
@@ -69,7 +75,7 @@ export const products = sqliteTable(
   })
 );
 
-export const productVariants = sqliteTable(
+export const productVariants = pgTable(
   "product_variants",
   {
     id: text("id").primaryKey(),
@@ -80,10 +86,8 @@ export const productVariants = sqliteTable(
     lengthCm: real("length_cm"),
     size: text("size"),
     price: real("price").notNull(),
-    inStock: integer("in_stock", { mode: "boolean" }).notNull().default(true),
-    madeToOrder: integer("made_to_order", { mode: "boolean" })
-      .notNull()
-      .default(false),
+    inStock: boolean("in_stock").notNull().default(true),
+    madeToOrder: boolean("made_to_order").notNull().default(false),
     productionDays: text("production_days"),
     stockCount: integer("stock_count").notNull().default(0),
   },
@@ -92,7 +96,7 @@ export const productVariants = sqliteTable(
   })
 );
 
-export const orders = sqliteTable(
+export const orders = pgTable(
   "orders",
   {
     id: text("id").primaryKey(),
@@ -109,7 +113,8 @@ export const orders = sqliteTable(
     totalUsd: real("total_usd").notNull(),
     promoCode: text("promo_code"),
     promoDiscount: real("promo_discount").notNull().default(0),
-    giftWrap: integer("gift_wrap", { mode: "boolean" }).notNull().default(false),
+    bulkDiscount: real("bulk_discount").notNull().default(0),
+    giftWrap: boolean("gift_wrap").notNull().default(false),
     giftNote: text("gift_note"),
     shippingName: text("shipping_name").notNull(),
     shippingEmail: text("shipping_email"),
@@ -122,12 +127,12 @@ export const orders = sqliteTable(
     shippingNotes: text("shipping_notes"),
     trackingNumber: text("tracking_number"),
     adminNotes: text("admin_notes"),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
-    updatedAt: integer("updated_at", { mode: "timestamp" })
+      .default(sql`now()`),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     userIdx: index("orders_user_idx").on(t.userId),
@@ -135,7 +140,7 @@ export const orders = sqliteTable(
   })
 );
 
-export const orderItems = sqliteTable(
+export const orderItems = pgTable(
   "order_items",
   {
     id: text("id").primaryKey(),
@@ -155,14 +160,14 @@ export const orderItems = sqliteTable(
     quantity: integer("quantity").notNull(),
     engravingText: text("engraving_text"),
     gemstone: text("gemstone"),
-    charmIds: text("charm_ids", { mode: "json" }).$type<string[]>(),
+    charmIds: jsonb("charm_ids").$type<string[]>(),
   },
   (t) => ({
     orderIdx: index("order_items_order_idx").on(t.orderId),
   })
 );
 
-export const savedDesigns = sqliteTable(
+export const savedDesigns = pgTable(
   "saved_designs",
   {
     id: text("id").primaryKey(),
@@ -171,19 +176,17 @@ export const savedDesigns = sqliteTable(
       .references(() => users.id, { onDelete: "cascade" }),
     productId: text("product_id"),
     productName: text("product_name").notNull(),
-    config: text("config", { mode: "json" })
-      .$type<Record<string, string>>()
-      .notNull(),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    config: jsonb("config").$type<Record<string, string>>().notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     userIdx: index("designs_user_idx").on(t.userId),
   })
 );
 
-export const wishlistItems = sqliteTable(
+export const wishlistItems = pgTable(
   "wishlist_items",
   {
     id: text("id").primaryKey(),
@@ -193,17 +196,17 @@ export const wishlistItems = sqliteTable(
     productId: text("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
-    createdAt: integer("created_at", { mode: "timestamp" })
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     userIdx: index("wishlist_user_idx").on(t.userId),
-    uniquePair: index("wishlist_unique_idx").on(t.userId, t.productId),
+    uniquePair: uniqueIndex("wishlist_unique_idx").on(t.userId, t.productId),
   })
 );
 
-export const reviews = sqliteTable(
+export const reviews = pgTable(
   "reviews",
   {
     id: text("id").primaryKey(),
@@ -215,22 +218,18 @@ export const reviews = sqliteTable(
     rating: integer("rating").notNull(),
     title: text("title"),
     body: text("body").notNull(),
-    isVerified: integer("is_verified", { mode: "boolean" })
+    isVerified: boolean("is_verified").notNull().default(false),
+    isApproved: boolean("is_approved").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
-      .default(false),
-    isApproved: integer("is_approved", { mode: "boolean" })
-      .notNull()
-      .default(true),
-    createdAt: integer("created_at", { mode: "timestamp" })
-      .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     productIdx: index("reviews_product_idx").on(t.productId),
   })
 );
 
-export const homepageSections = sqliteTable("homepage_sections", {
+export const homepageSections = pgTable("homepage_sections", {
   id: text("id").primaryKey(),
   sectionKey: text("section_key").notNull().unique(),
   title: text("title"),
@@ -239,22 +238,22 @@ export const homepageSections = sqliteTable("homepage_sections", {
   imageUrl: text("image_url"),
   ctaLabel: text("cta_label"),
   ctaHref: text("cta_href"),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
+  isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`now()`),
 });
 
-export const settings = sqliteTable("settings", {
+export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
-    .default(sql`(unixepoch())`),
+    .default(sql`now()`),
 });
 
-export const addresses = sqliteTable(
+export const addresses = pgTable(
   "addresses",
   {
     id: text("id").primaryKey(),
@@ -269,25 +268,23 @@ export const addresses = sqliteTable(
     city: text("city").notNull(),
     area: text("area"),
     country: text("country").notNull(),
-    isDefault: integer("is_default", { mode: "boolean" })
-      .notNull()
-      .default(false),
+    isDefault: boolean("is_default").notNull().default(false),
   },
   (t) => ({
     userIdx: index("addresses_user_idx").on(t.userId),
   })
 );
 
-export const promoCodes = sqliteTable("promo_codes", {
+export const promoCodes = pgTable("promo_codes", {
   code: text("code").primaryKey(),
   type: text("type").notNull(),
   amount: real("amount").notNull(),
   minOrderUsd: real("min_order_usd").notNull().default(0),
-  isActive: integer("is_active", { mode: "boolean" }).notNull().default(true),
-  expiresAt: integer("expires_at", { mode: "timestamp" }),
+  isActive: boolean("is_active").notNull().default(true),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
 });
 
-export const recentlyViewed = sqliteTable(
+export const recentlyViewed = pgTable(
   "recently_viewed",
   {
     id: text("id").primaryKey(),
@@ -297,9 +294,9 @@ export const recentlyViewed = sqliteTable(
     productId: text("product_id")
       .notNull()
       .references(() => products.id, { onDelete: "cascade" }),
-    viewedAt: integer("viewed_at", { mode: "timestamp" })
+    viewedAt: timestamp("viewed_at", { withTimezone: true })
       .notNull()
-      .default(sql`(unixepoch())`),
+      .default(sql`now()`),
   },
   (t) => ({
     userIdx: index("recently_user_idx").on(t.userId),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -10,10 +10,12 @@ import {
   Star,
   Save,
   AlertCircle,
+  Upload,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
 import { toast } from "sonner";
@@ -25,7 +27,6 @@ const CATEGORIES = [
   "rings",
   "earrings",
   "anklets",
-  "initial-charm",
 ];
 
 const METALS = ["gold", "rose-gold", "silver"];
@@ -85,7 +86,6 @@ export default function AdminProductsPage() {
   }
 
   async function deleteProduct(p: Product) {
-    if (!confirm(`Delete "${p.name}"? This cannot be undone.`)) return;
     await fetch(`/api/admin/products/${p.id}`, {
       method: "DELETE",
       credentials: "include",
@@ -207,14 +207,22 @@ export default function AdminProductsPage() {
                   >
                     {p.isActive ? "Hide" : "Show"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => deleteProduct(p)}
-                    className="rounded-full text-xs text-destructive hover:border-destructive"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full text-xs text-destructive hover:border-destructive"
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    }
+                    title={`Delete "${p.name}"?`}
+                    description="This will permanently remove the product and its variants. This cannot be undone."
+                    confirmLabel="Delete"
+                    destructive
+                    onConfirm={() => deleteProduct(p)}
+                  />
                 </div>
               </div>
             </div>
@@ -255,6 +263,8 @@ function ProductEditDrawer({
 }) {
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [data, setData] = useState<any>({
     name: "",
     slug: "",
@@ -271,6 +281,10 @@ function ProductEditDrawer({
     isActive: true,
     tags: [],
     occasion: [],
+    personalization: {},
+    engravingEnabled: false,
+    engravingMaxLength: 10,
+    engravingPlaceholder: "",
     variants: [
       { metal: "gold", price: 0, inStock: true, stockCount: 0 },
     ],
@@ -291,6 +305,12 @@ function ProductEditDrawer({
           materials: json.product.materials || [""],
           images: json.product.images || [""],
           variants: json.variants || [],
+          personalization: json.product.personalization || {},
+          engravingEnabled: !!json.product.personalization?.engraving,
+          engravingMaxLength:
+            json.product.personalization?.engraving?.maxLength ?? 10,
+          engravingPlaceholder:
+            json.product.personalization?.engraving?.placeholder ?? "",
         });
       }
       setLoading(false);
@@ -298,10 +318,35 @@ function ProductEditDrawer({
   }, [productId, isNew]);
 
   async function save() {
+    // Engraving is required when it's enabled on the product.
+    const engravingEnabled = !!data.engravingEnabled;
+    const maxLength = parseInt(data.engravingMaxLength, 10) || 0;
+    const placeholder = (data.engravingPlaceholder || "").trim();
+    if (engravingEnabled && (maxLength <= 0 || !placeholder)) {
+      toast.error(
+        "Engraving is enabled — set the max characters and placeholder first"
+      );
+      setSaving(false);
+      return;
+    }
+
     setSaving(true);
     try {
+      // Preserve any other personalization (charm, length) while controlling engraving.
+      const personalization = {
+        ...(data.personalization && typeof data.personalization === "object"
+          ? data.personalization
+          : {}),
+      };
+      if (engravingEnabled) {
+        personalization.engraving = { maxLength, placeholder };
+      } else {
+        delete personalization.engraving;
+      }
+
       const payload = {
         ...data,
+        personalization,
         tags: typeof data.tags === "string" ? data.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : data.tags,
         occasion: typeof data.occasion === "string" ? data.occasion.split(",").map((t: string) => t.trim()).filter(Boolean) : data.occasion,
         materials: data.materials.filter((m: string) => m.trim()),
@@ -449,15 +494,106 @@ function ProductEditDrawer({
               </Field>
             </div>
 
-            <Field label="Image URLs (one per line)">
-              <Textarea
-                value={data.images.join("\n")}
-                onChange={(e) =>
-                  setData({ ...data, images: e.target.value.split("\n") })
-                }
-                rows={3}
-                placeholder="https://… or data:image/svg+xml,…"
-              />
+            <Field label="Images">
+              <div className="mt-1 space-y-3">
+                {data.images.some((i: string) => i.trim()) && (
+                  <div className="flex flex-wrap gap-2">
+                    {data.images.map((src: string, i: number) =>
+                      src.trim() ? (
+                        <div
+                          key={i}
+                          className="group relative size-20 overflow-hidden rounded-lg border border-border bg-card"
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={src}
+                            alt={`Product image ${i + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setData({
+                                ...data,
+                                images: data.images.filter(
+                                  (_: string, idx: number) => idx !== i
+                                ),
+                              })
+                            }
+                            aria-label="Remove image"
+                            className="absolute right-1 top-1 rounded-full bg-navy/70 p-1 text-cream opacity-0 transition-opacity hover:bg-navy group-hover:opacity-100"
+                          >
+                            <X className="size-3" />
+                          </button>
+                        </div>
+                      ) : null
+                    )}
+                  </div>
+                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={uploading}
+                    onClick={() => fileInputRef.current?.click()}
+                    className="rounded-full"
+                  >
+                    <Upload className="me-2 size-3.5" />
+                    {uploading ? "Uploading…" : "Upload images"}
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      // Snapshot before resetting: e.target.value = "" clears the
+                      // live FileList, so checks on it afterwards see 0 files.
+                      const files = Array.from(e.target.files ?? []);
+                      e.target.value = "";
+                      if (files.length === 0) return;
+                      setUploading(true);
+                      try {
+                        const urls: string[] = [];
+                        for (const file of files) {
+                          const fd = new FormData();
+                          fd.append("file", file);
+                          const res = await fetch("/api/admin/upload", {
+                            method: "POST",
+                            credentials: "include",
+                            body: fd,
+                          });
+                          const json = await res.json().catch(() => ({}));
+                          if (!res.ok) {
+                            throw new Error(json.error || "Upload failed");
+                          }
+                          urls.push(json.url);
+                        }
+                        if (urls.length > 0) {
+                          setData({
+                            ...data,
+                            images: [...data.images.filter((i: string) => i.trim()), ...urls],
+                          });
+                          toast.success(
+                            `${urls.length} image${urls.length > 1 ? "s" : ""} uploaded`
+                          );
+                        }
+                      } catch (err) {
+                        toast.error(
+                          err instanceof Error ? err.message : "Upload failed"
+                        );
+                      } finally {
+                        setUploading(false);
+                      }
+                    }}
+                  />
+                  <span className="text-[10px] text-navy/50">
+                    JPEG, PNG, WebP, GIF or SVG · up to 5MB each
+                  </span>
+                </div>
+              </div>
             </Field>
 
             <Field label="Materials (one per line)">
@@ -514,6 +650,52 @@ function ProductEditDrawer({
                 />
                 Hypoallergenic
               </label>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <h3 className="mb-1 text-sm font-medium text-navy">Engraving</h3>
+              <p className="mb-3 text-xs text-navy/55">
+                Let customers add a name, initial or message to this piece.
+              </p>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-navy">
+                <input
+                  type="checkbox"
+                  checked={data.engravingEnabled}
+                  onChange={(e) =>
+                    setData({ ...data, engravingEnabled: e.target.checked })
+                  }
+                  className="accent-navy"
+                />
+                Enable engraving on this product
+              </label>
+              {data.engravingEnabled && (
+                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                  <Field label="Max characters *">
+                    <Input
+                      type="number"
+                      min={1}
+                      value={data.engravingMaxLength}
+                      onChange={(e) =>
+                        setData({ ...data, engravingMaxLength: e.target.value })
+                      }
+                    />
+                  </Field>
+                  <Field label="Placeholder *">
+                    <Input
+                      value={data.engravingPlaceholder}
+                      onChange={(e) =>
+                        setData({ ...data, engravingPlaceholder: e.target.value })
+                      }
+                      placeholder='e.g. "Her name"'
+                    />
+                  </Field>
+                </div>
+              )}
+              {data.engravingEnabled && (
+                <p className="mt-2 text-xs text-navy/50">
+                  The engraving fields are required while engraving is enabled.
+                </p>
+              )}
             </div>
 
             <div className="rounded-2xl border border-border bg-card p-5">

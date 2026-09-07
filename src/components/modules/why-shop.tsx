@@ -1,7 +1,7 @@
-import { Award, Truck, RefreshCcw, Heart, Sparkles, Globe } from "lucide-react";
+import { Award, Truck, Heart, Sparkles, Globe } from "lucide-react";
 import { TRUST_BADGES } from "@/lib/data";
 
-const ICONS = [Award, Sparkles, Heart, Truck, RefreshCcw, Globe];
+const ICONS = [Award, Sparkles, Heart, Truck, Globe];
 
 export function WhyShopWithUsModule() {
   return (
@@ -9,7 +9,7 @@ export function WhyShopWithUsModule() {
       <div className="container-wide">
         <div className="mb-10 text-center">
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-gold">
-            Why Lune
+            Why Hime
           </p>
           <h2 className="mt-2 font-serif text-4xl text-navy sm:text-5xl">
             Made with care, made to last.

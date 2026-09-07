@@ -5,6 +5,7 @@ import { Save, Plus, Trash2, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,6 @@ export default function AdminContentPage() {
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this section?")) return;
     await fetch(`/api/admin/homepage/${id}`, {
       method: "DELETE",
       credentials: "include",
@@ -152,14 +152,22 @@ export default function AdminContentPage() {
                     <Save className="me-1.5 size-3" />
                     {saving === s.id ? "Saving" : "Save"}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => remove(s.id)}
-                    className="rounded-full text-destructive"
-                  >
-                    <Trash2 className="size-3" />
-                  </Button>
+                  <ConfirmDialog
+                    trigger={
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="rounded-full text-destructive"
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    }
+                    title="Delete this section?"
+                    description="The section will be removed from the homepage editor. This cannot be undone."
+                    confirmLabel="Delete"
+                    destructive
+                    onConfirm={() => remove(s.id)}
+                  />
                 </div>
               </div>
 

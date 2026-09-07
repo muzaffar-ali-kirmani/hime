@@ -13,11 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
-import {
-  formatPrice,
-  FREE_SHIPPING_THRESHOLD_USD,
-  STANDARD_SHIPPING_USD,
-} from "@/lib/locale";
+import { formatPrice } from "@/lib/locale";
 import { useState } from "react";
 import { PRODUCTS } from "@/lib/data";
 
@@ -29,19 +25,31 @@ export function CartDrawer() {
     removeFromCart,
     updateQuantity,
     cartSubtotal,
+    cartBulkDiscount,
+    settings,
   } = useStore();
   const { currency, t, language } = useLocale();
   const [promo, setPromo] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [giftWrap, setGiftWrap] = useState(false);
 
-  const freeShipThreshold = FREE_SHIPPING_THRESHOLD_USD;
-  const remaining = Math.max(0, freeShipThreshold - cartSubtotal);
-  const progress = Math.min(100, (cartSubtotal / freeShipThreshold) * 100);
-  const shipping = cartSubtotal >= freeShipThreshold ? 0 : STANDARD_SHIPPING_USD;
-  const total = cartSubtotal + shipping + (giftWrap ? 8 : 0) - (promoApplied ? cartSubtotal * 0.15 : 0);
+  const freeShipThreshold = settings.freeShippingThreshold;
+  const discountedSubtotal = cartSubtotal - cartBulkDiscount;
+  const remaining = Math.max(0, freeShipThreshold - discountedSubtotal);
+  const progress = Math.min(100, (discountedSubtotal / freeShipThreshold) * 100);
+  const shipping =
+    !settings.shippingEnabled ||
+    discountedSubtotal >= freeShipThreshold
+      ? 0
+      : settings.standardShippingUsd;
+  const total =
+    cartSubtotal -
+    cartBulkDiscount +
+    shipping +
+    (giftWrap ? 8 : 0) -
+    (promoApplied ? cartSubtotal * 0.15 : 0);
 
-  const upsellProduct = PRODUCTS.find((p) => p.id === "p-009");
+  const upsellProduct = PRODUCTS.find((p) => p.id === "p-006");
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -80,7 +88,11 @@ export function CartDrawer() {
           <>
             {/* Free shipping bar */}
             <div className="border-b border-border/50 bg-secondary/40 px-6 py-3">
-              {remaining > 0 ? (
+              {!settings.shippingEnabled ? (
+                <p className="text-xs font-medium text-navy">
+                  ✨ Free shipping on every order
+                </p>
+              ) : remaining > 0 ? (
                 <p className="text-xs text-navy/80">
                   {t("free.shipping.threshold").replace(
                     "{amount}",
@@ -168,9 +180,11 @@ export function CartDrawer() {
                             <Plus className="size-3 text-navy" />
                           </button>
                         </div>
-                        <p className="text-sm font-semibold text-navy">
-                          {formatPrice(item.unitPrice * item.quantity, currency, language)}
-                        </p>
+                        <div className="text-right">
+                          <p className="text-sm font-semibold text-navy">
+                            {formatPrice(item.unitPrice * item.quantity, currency, language)}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   </li>
@@ -264,6 +278,12 @@ export function CartDrawer() {
                     {shipping === 0 ? "Free" : formatPrice(shipping, currency, language)}
                   </dd>
                 </div>
+                {cartBulkDiscount > 0 && (
+                  <div className="flex justify-between text-success">
+                    <dt>Bulk discount (20% on 2+ items)</dt>
+                    <dd>-{formatPrice(cartBulkDiscount, currency, language)}</dd>
+                  </div>
+                )}
                 {promoApplied && (
                   <div className="flex justify-between text-success">
                     <dt>WELCOME15 (15% off)</dt>

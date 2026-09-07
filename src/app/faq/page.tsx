@@ -46,15 +46,11 @@ const FAQ_GROUPS = [
     ],
   },
   {
-    title: "Shipping & Returns",
+    title: "Shipping",
     items: [
       {
         q: "Do you ship across all GCC countries?",
         a: "Yes — we ship to UAE, Saudi Arabia, Qatar, Kuwait, Bahrain and Oman with free delivery on orders over 150 USD.",
-      },
-      {
-        q: "What is your return policy?",
-        a: "We offer 30-day free returns on non-personalised pieces. Personalised pieces can be exchanged within 14 days if unworn.",
       },
       {
         q: "Do I need to pay customs or duties?",

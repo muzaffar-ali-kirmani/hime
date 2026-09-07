@@ -7,7 +7,6 @@ import {
   Heart,
   Share2,
   Truck,
-  RefreshCcw,
   Shield,
   Ruler,
   Star,
@@ -16,15 +15,16 @@ import {
   Check,
   Sparkles,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
-import { formatPrice, FREE_SHIPPING_THRESHOLD_USD, COUNTRIES } from "@/lib/locale";
-import type { Product, MetalFinish, Gemstone } from "@/lib/types";
-import { GEMSTONES, ENGRAVING_FONTS, CHARMS, getProduct, PRODUCTS } from "@/lib/data";
+import { formatPrice, COUNTRIES } from "@/lib/locale";
+import type { Product, MetalFinish } from "@/lib/types";
+import { getProduct, PRODUCTS } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/product-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -33,16 +33,45 @@ interface Props {
   product: Product;
 }
 
+interface DbReview {
+  id: string;
+  authorName: string;
+  rating: number;
+  title: string | null;
+  body: string;
+  isVerified: boolean;
+  createdAt: string;
+}
+
 export function ProductDetail({ product }: Props) {
   const { currency, language, country, t } = useLocale();
-  const { addToCart, toggleWishlist, isWishlisted, pushRecentlyViewed, cartSubtotal } = useStore();
+  const { addToCart, toggleWishlist, isWishlisted, pushRecentlyViewed, cartSubtotal, settings } = useStore();
+  const [reviews, setReviews] = useState<DbReview[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setReviewsLoading(true);
+    fetch(`/api/reviews?productId=${encodeURIComponent(product.id)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        if (!cancelled) setReviews(data.reviews || []);
+        setReviewsLoading(false);
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReviews([]);
+          setReviewsLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id]);
 
   const firstAvailable = product.variants.find((v) => v.inStock) || product.variants[0];
   const [selectedVariant, setSelectedVariant] = useState(firstAvailable);
   const [engraving, setEngraving] = useState("");
-  const [selectedGemstone, setSelectedGemstone] = useState<Gemstone | null>(null);
-  const [selectedCharms, setSelectedCharms] = useState<string[]>([]);
-  const [engravingFont, setEngravingFont] = useState("classic");
   const [quantity, setQuantity] = useState(1);
   const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
 
@@ -52,12 +81,7 @@ export function ProductDetail({ product }: Props) {
 
   const wishlisted = isWishlisted(product.id);
 
-  const price = useMemo(() => {
-    let p = selectedVariant.price;
-    if (selectedGemstone) p += 15;
-    if (selectedCharms.length) p += selectedCharms.length * 22;
-    return p;
-  }, [selectedVariant, selectedGemstone, selectedCharms]);
+  const price = selectedVariant.price;
 
   const countryName = COUNTRIES[country].name;
   const deliveryDate = (() => {
@@ -70,13 +94,16 @@ export function ProductDetail({ product }: Props) {
     });
   })();
 
-  const toggleCharm = (id: string) => {
-    setSelectedCharms((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
+  const changeQuantity = (next: number) => {
+    setQuantity(Math.max(1, next));
   };
 
   const handleAddToCart = () => {
+    // Engraving is required when the product supports it
+    if (product.personalization?.engraving && !engraving.trim()) {
+      toast.error("Please enter an engraving to continue");
+      return;
+    }
     addToCart({
       productId: product.id,
       productSlug: product.slug,
@@ -85,8 +112,6 @@ export function ProductDetail({ product }: Props) {
       variant: selectedVariant,
       personalization: {
         engravingText: engraving || undefined,
-        gemstone: selectedGemstone || undefined,
-        charmIds: selectedCharms.length ? selectedCharms : undefined,
       },
       quantity,
       unitPrice: price,
@@ -133,30 +158,6 @@ export function ProductDetail({ product }: Props) {
               unoptimized
               className="object-cover"
             />
-            {engraving && (
-              <div
-                className={cn(
-                  "pointer-events-none absolute inset-0 flex items-center justify-center",
-                  engravingFont === "script" && "font-serif italic",
-                  engravingFont === "block" && "font-mono",
-                  engravingFont === "classic" && "font-serif"
-                )}
-              >
-                <span
-                  className="text-5xl text-navy/85 drop-shadow-sm"
-                  style={{
-                    fontFamily:
-                      engravingFont === "script"
-                        ? "var(--font-cormorant), serif"
-                        : engravingFont === "block"
-                        ? "ui-monospace, monospace"
-                        : "var(--font-cormorant), serif",
-                  }}
-                >
-                  {engraving}
-                </span>
-              </div>
-            )}
             {product.badge && (
               <span className="absolute top-4 left-4 rounded-full bg-navy px-3 py-1 text-[10px] font-semibold uppercase tracking-widest text-cream">
                 {product.badge}
@@ -340,129 +341,40 @@ export function ProductDetail({ product }: Props) {
           )}
 
           {/* Engraving */}
-          {product.personalization?.engraving && (
-            <div className="mt-7 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 to-transparent p-5">
-              <div className="mb-3 flex items-center gap-2">
-                <Sparkles className="size-3.5 text-gold" />
-                <p className="text-[11px] font-medium uppercase tracking-widest text-navy">
-                  {t("engraving")}
-                </p>
-                <span className="text-[10px] text-navy/50">
-                  · up to {product.personalization.engraving.maxLength} characters
-                </span>
-              </div>
-              <Input
-                value={engraving}
-                onChange={(e) =>
-                  setEngraving(
-                    e.target.value.slice(0, product.personalization!.engraving!.maxLength)
-                  )
-                }
-                placeholder={product.personalization.engraving.placeholder}
-                maxLength={product.personalization.engraving.maxLength}
-                className="rounded-full bg-card"
-              />
-              {engraving && (
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {ENGRAVING_FONTS.map((f) => (
-                    <button
-                      key={f.id}
-                      onClick={() => setEngravingFont(f.id)}
-                      className={cn(
-                        "rounded-full border px-3 py-1 text-xs",
-                        engravingFont === f.id
-                          ? "border-navy bg-navy text-cream"
-                          : "border-border bg-card text-navy"
-                      )}
-                    >
-                      {f.name}
-                    </button>
-                  ))}
+          {product.personalization?.engraving && (() => {
+            const maxLen = product.personalization!.engraving!.maxLength;
+            // Buying 2+ pieces means one engraving per piece, so ask for two names.
+            return (
+              <div className="mt-7 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/5 to-transparent p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Sparkles className="size-3.5 text-gold" />
+                  <p className="text-[11px] font-medium uppercase tracking-widest text-navy">
+                    {t("engraving")}
+                  </p>
+                  <span className="text-[10px] text-navy/50">
+                    · up to {maxLen} characters
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
-
-          {/* Gemstone */}
-          {product.personalization?.gemstone && (
-            <div className="mt-7">
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-navy">
-                {t("gemstone")}
-                {selectedGemstone && (
-                  <span className="ms-2 text-gold">
-                    · {GEMSTONES.find((g) => g.id === selectedGemstone)?.name} (+$15)
-                  </span>
-                )}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedGemstone(null)}
-                  className={cn(
-                    "size-9 rounded-full border-2 bg-cream transition-all",
-                    !selectedGemstone
-                      ? "border-navy ring-2 ring-gold ring-offset-2 ring-offset-cream"
-                      : "border-border"
-                  )}
-                  aria-label="No gemstone"
-                >
-                  <span className="block text-[10px] text-navy/60">×</span>
-                </button>
-                {GEMSTONES.map((g) => (
-                  <button
-                    key={g.id}
-                    onClick={() => setSelectedGemstone(g.id)}
-                    title={`${g.name} · ${g.birthMonth}`}
-                    className={cn(
-                      "size-9 rounded-full border-2 transition-all",
-                      selectedGemstone === g.id
-                        ? "border-navy ring-2 ring-gold ring-offset-2 ring-offset-cream"
-                        : "border-border"
-                    )}
-                    style={{ background: g.hex }}
-                    aria-label={g.name}
-                  />
-                ))}
+                <Input
+                  value={engraving}
+                  onChange={(e) =>
+                    setEngraving(
+                      e.target.value.slice(0, product.personalization!.engraving!.maxLength)
+                    )
+                  }
+                  placeholder={product.personalization.engraving.placeholder}
+                  maxLength={product.personalization.engraving.maxLength}
+                  className="rounded-full bg-card"
+                />
               </div>
-            </div>
-          )}
-
-          {/* Charms */}
-          {product.personalization?.charm && (
-            <div className="mt-7">
-              <p className="mb-3 text-[11px] font-medium uppercase tracking-widest text-navy">
-                {t("charms")}
-                {selectedCharms.length > 0 && (
-                  <span className="ms-2 text-gold">
-                    · {selectedCharms.length} added
-                  </span>
-                )}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {CHARMS.map((c) => (
-                  <button
-                    key={c.id}
-                    onClick={() => toggleCharm(c.id)}
-                    className={cn(
-                      "flex items-center gap-2 rounded-full border px-3 py-2 text-xs transition-all",
-                      selectedCharms.includes(c.id)
-                        ? "border-navy bg-navy text-cream"
-                        : "border-border bg-card text-navy hover:border-navy"
-                    )}
-                  >
-                    <span className="text-base">{c.symbol}</span>
-                    <span>{c.name}</span>
-                    <span className="text-[10px] opacity-60">+${c.price}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Add to cart */}
           <div className="mt-8 flex items-stretch gap-3">
             <div className="flex items-center rounded-full border border-border bg-card">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                onClick={() => changeQuantity(quantity - 1)}
                 className="px-3 py-2 text-navy disabled:opacity-30"
                 disabled={quantity <= 1}
                 aria-label="Decrease quantity"
@@ -473,7 +385,7 @@ export function ProductDetail({ product }: Props) {
                 {quantity}
               </span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => changeQuantity(quantity + 1)}
                 className="px-3 py-2 text-navy"
                 aria-label="Increase quantity"
               >
@@ -518,10 +430,6 @@ export function ProductDetail({ product }: Props) {
               </span>
             </div>
             <div className="flex items-center gap-3 text-sm">
-              <RefreshCcw className="size-4 text-gold" />
-              <span className="text-navy">30-day free returns</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
               <Shield className="size-4 text-gold" />
               <span className="text-navy">
                 {selectedVariant.madeToOrder
@@ -529,13 +437,14 @@ export function ProductDetail({ product }: Props) {
                   : "In stock · Ships within 24h"}
               </span>
             </div>
-            {cartSubtotal < FREE_SHIPPING_THRESHOLD_USD && (
-              <p className="mt-2 text-xs text-navy/60">
-                ✨ Add{" "}
-                {formatPrice(FREE_SHIPPING_THRESHOLD_USD - cartSubtotal, currency, language)}{" "}
-                for free shipping
-              </p>
-            )}
+            {settings.shippingEnabled &&
+              cartSubtotal < settings.freeShippingThreshold && (
+                <p className="mt-2 text-xs text-navy/60">
+                  ✨ Add{" "}
+                  {formatPrice(settings.freeShippingThreshold - cartSubtotal, currency, language)}{" "}
+                  for free shipping
+                </p>
+              )}
           </div>
 
           {/* Tabs */}
@@ -600,35 +509,35 @@ export function ProductDetail({ product }: Props) {
               </div>
               <Separator className="my-5" />
               <div className="space-y-4">
-                {[
-                  {
-                    name: "Sara M.",
-                    rating: 5,
-                    text: "Absolutely love this piece. The engraving is delicate and the gold colour is just right.",
-                  },
-                  {
-                    name: "Noora K.",
-                    rating: 5,
-                    text: "Beautiful quality. I wear it every day and it still looks brand new.",
-                  },
-                  {
-                    name: "Hala R.",
-                    rating: 4,
-                    text: "Lovely, but I wish the chain was a touch longer. Otherwise perfect.",
-                  },
-                ].map((r, i) => (
-                  <div key={i} className="border-b border-border pb-4 last:border-b-0">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-navy">{r.name}</p>
-                      <div className="flex gap-0.5">
-                        {Array.from({ length: r.rating }).map((_, j) => (
-                          <Star key={j} className="size-3 fill-gold stroke-gold" />
-                        ))}
+                {reviewsLoading ? (
+                  <p className="py-6 text-center text-sm text-navy/60">Loading reviews…</p>
+                ) : reviews.length === 0 ? (
+                  <p className="py-6 text-center text-sm text-navy/60">
+                    No reviews yet. Be the first to share your experience.
+                  </p>
+                ) : (
+                  reviews.map((r) => (
+                    <div key={r.id} className="border-b border-border pb-4 last:border-b-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-medium text-navy">{r.authorName}</p>
+                        {r.isVerified && (
+                          <span className="rounded-full bg-success/15 px-2 py-0.5 text-[9px] uppercase tracking-widest text-success">
+                            Verified
+                          </span>
+                        )}
+                        <div className="flex gap-0.5">
+                          {Array.from({ length: r.rating }).map((_, j) => (
+                            <Star key={j} className="size-3 fill-gold stroke-gold" />
+                          ))}
+                        </div>
                       </div>
+                      {r.title && (
+                        <p className="mt-1 text-sm font-medium text-navy">{r.title}</p>
+                      )}
+                      <p className="mt-1 text-sm text-navy/75">{r.body}</p>
                     </div>
-                    <p className="mt-1 text-sm text-navy/75">{r.text}</p>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </TabsContent>
           </Tabs>

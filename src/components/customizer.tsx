@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
-import type { MetalFinish, Gemstone, ProductCategory } from "@/lib/types";
-import { GEMSTONES, ENGRAVING_FONTS, CHARMS, PRODUCTS } from "@/lib/data";
+import type { MetalFinish, ProductCategory } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -34,10 +34,11 @@ const BASE_OPTIONS: { id: ProductCategory; label: string; image: string }[] = [
   { id: "earrings", label: "Earrings", image: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
 ];
 
+// All metal finishes are priced the same.
 const METALS: { id: MetalFinish; label: string; price: number; swatch: string }[] = [
   { id: "gold", label: "18K Gold", price: 0, swatch: "linear-gradient(135deg, #E8D9B8, #A88A4D)" },
-  { id: "rose-gold", label: "Rose Gold", price: 15, swatch: "linear-gradient(135deg, #F4D4C4, #B8866F)" },
-  { id: "silver", label: "925 Silver", price: -25, swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
+  { id: "rose-gold", label: "Rose Gold", price: 0, swatch: "linear-gradient(135deg, #F4D4C4, #B8866F)" },
+  { id: "silver", label: "925 Silver", price: 0, swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
 ];
 
 const LENGTHS = [40, 45, 50, 55];
@@ -52,26 +53,20 @@ export function Customizer() {
   const [length, setLength] = useState(45);
   const [size, setSize] = useState("6");
   const [engraving, setEngraving] = useState("");
-  const [gemstone, setGemstone] = useState<Gemstone | null>(null);
-  const [charms, setCharms] = useState<string[]>([]);
-  const [font, setFont] = useState("classic");
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   const basePrice = 149;
-  const totalPrice = useMemo(() => {
-    let p = basePrice;
-    p += METALS.find((m) => m.id === metal)!.price;
-    if (gemstone) p += 25;
-    if (charms.length) p += charms.length * 22;
-    return p;
-  }, [metal, gemstone, charms]);
-
-  const toggleCharm = (id: string) =>
-    setCharms((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
-    );
+  const totalPrice = useMemo(
+    () => basePrice + METALS.find((m) => m.id === metal)!.price,
+    [metal]
+  );
 
   const handleAddToCart = () => {
+    // Engraving is the whole point of a custom piece — require it
+    if (!engraving.trim()) {
+      toast.error("Please enter an engraving to continue");
+      return;
+    }
     const variant = {
       id: `${metal}-${base === "rings" ? size : length}`,
       metal,
@@ -88,8 +83,6 @@ export function Customizer() {
       variant,
       personalization: {
         engravingText: engraving || undefined,
-        gemstone: gemstone || undefined,
-        charmIds: charms.length ? charms : undefined,
       },
       quantity: 1,
       unitPrice: totalPrice,
@@ -107,9 +100,6 @@ export function Customizer() {
         length: String(length),
         size,
         engraving,
-        gemstone: gemstone || "",
-        charms: charms.join(","),
-        font,
       },
       createdAt: Date.now(),
     });
@@ -118,12 +108,12 @@ export function Customizer() {
   };
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/customize?metal=${metal}&base=${base}&engraving=${encodeURIComponent(engraving)}&gemstone=${gemstone || ""}`;
+    const url = `${window.location.origin}/customize?metal=${metal}&base=${base}&engraving=${encodeURIComponent(engraving)}`;
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "My Lune design",
-          text: "Look at the piece I designed on Lune",
+          title: "My Hime design",
+          text: "Look at the piece I designed on Hime",
           url,
         });
       } catch {}
@@ -182,7 +172,7 @@ export function Customizer() {
           <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-cream via-sand to-blush p-8 sm:p-12">
             <div className="relative mx-auto aspect-square max-w-md overflow-hidden rounded-2xl bg-cream shadow-[0_30px_60px_-20px_rgba(29,42,68,0.18)]">
               <Image
-                src={`data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0"}'/%3E%3Cstop offset='1' stop-color='${metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8"}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='600' fill='%23F7F3EB'/%3E%3Ccircle cx='300' cy='260' r='80' fill='url(%23m)'/%3E%3Crect x='280' y='260' width='40' height='200' fill='url(%23m)' rx='4'/%3E%3Ccircle cx='300' cy='460' r='15' fill='url(%23m)'/%3E%3Ctext x='300' y='520' font-family='Cormorant Garamond' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.5'%3ELUNE%3C/text%3E%3C/svg%3E`}
+                src={`data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0"}'/%3E%3Cstop offset='1' stop-color='${metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8"}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='600' fill='%23F7F3EB'/%3E%3Ccircle cx='300' cy='260' r='80' fill='url(%23m)'/%3E%3Crect x='280' y='260' width='40' height='200' fill='url(%23m)' rx='4'/%3E%3Ccircle cx='300' cy='460' r='15' fill='url(%23m)'/%3E%3Ctext x='300' y='520' font-family='Cormorant Garamond' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.5'%3EHIME%3C/text%3E%3C/svg%3E`}
                 alt="Live preview"
                 fill
                 unoptimized
@@ -190,56 +180,9 @@ export function Customizer() {
               />
               {engraving && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center pt-32">
-                  <span
-                    className={cn(
-                      "text-3xl text-navy/90 sm:text-5xl",
-                      font === "script" && "font-serif italic",
-                      font === "block" && "font-mono"
-                    )}
-                    style={{
-                      fontFamily:
-                        font === "script"
-                          ? "var(--font-cormorant), serif"
-                          : font === "block"
-                          ? "ui-monospace, monospace"
-                          : "var(--font-cormorant), serif",
-                    }}
-                  >
+                  <span className="text-3xl text-navy/90 sm:text-5xl">
                     {engraving}
                   </span>
-                </div>
-              )}
-              {gemstone && (
-                <div
-                  className="pointer-events-none absolute"
-                  style={{
-                    top: "32%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                  }}
-                >
-                  <div
-                    className="size-7 rounded-full ring-2 ring-cream shadow-lg sm:size-9"
-                    style={{
-                      background: GEMSTONES.find((g) => g.id === gemstone)?.hex,
-                    }}
-                  />
-                </div>
-              )}
-              {charms.length > 0 && (
-                <div className="absolute right-3 top-3 flex flex-wrap justify-end gap-1.5">
-                  {charms.map((cId) => {
-                    const c = CHARMS.find((c) => c.id === cId);
-                    if (!c) return null;
-                    return (
-                      <span
-                        key={cId}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-cream/90 text-sm shadow-sm backdrop-blur-sm"
-                      >
-                        {c.symbol}
-                      </span>
-                    );
-                  })}
                 </div>
               )}
             </div>
@@ -359,77 +302,8 @@ export function Customizer() {
                   placeholder="Her name, initial, secret word…"
                   className="rounded-full bg-card"
                 />
-                {engraving && (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {ENGRAVING_FONTS.map((f) => (
-                      <button
-                        key={f.id}
-                        onClick={() => setFont(f.id)}
-                        className={cn(
-                          "rounded-full border px-3 py-1.5 text-xs",
-                          font === f.id
-                            ? "border-navy bg-navy text-cream"
-                            : "border-border bg-card text-navy"
-                        )}
-                      >
-                        {f.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </Step>
 
-              <Step title="Birthstone" subtitle="A gemstone in her birth month.">
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setGemstone(null)}
-                    className={cn(
-                      "size-10 rounded-full border-2 transition-all",
-                      !gemstone
-                        ? "border-navy ring-2 ring-gold ring-offset-2 ring-offset-cream"
-                        : "border-border"
-                    )}
-                  >
-                    <span className="block text-xs text-navy/50">×</span>
-                  </button>
-                  {GEMSTONES.map((g) => (
-                    <button
-                      key={g.id}
-                      onClick={() => setGemstone(g.id)}
-                      title={`${g.name} · ${g.birthMonth} · +$25`}
-                      className={cn(
-                        "size-10 rounded-full border-2 transition-all",
-                        gemstone === g.id
-                          ? "border-navy ring-2 ring-gold ring-offset-2 ring-offset-cream"
-                          : "border-border"
-                      )}
-                      style={{ background: g.hex }}
-                      aria-label={g.name}
-                    />
-                  ))}
-                </div>
-              </Step>
-
-              <Step title="Add charms" subtitle="Mix & match — each one tells a story.">
-                <div className="flex flex-wrap gap-2">
-                  {CHARMS.map((c) => (
-                    <button
-                      key={c.id}
-                      onClick={() => toggleCharm(c.id)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-full border px-3 py-2 text-xs transition-all",
-                        charms.includes(c.id)
-                          ? "border-navy bg-navy text-cream"
-                          : "border-border bg-card text-navy hover:border-navy"
-                      )}
-                    >
-                      <span className="text-base">{c.symbol}</span>
-                      <span>{c.name}</span>
-                      <span className="text-[10px] opacity-60">+${c.price}</span>
-                    </button>
-                  ))}
-                </div>
-              </Step>
             </>
           )}
 
@@ -443,24 +317,7 @@ export function Customizer() {
                   value={base === "rings" ? size : `${length} cm`}
                 />
                 {engraving && (
-                  <Row
-                    label="Engraving"
-                    value={`"${engraving}" · ${ENGRAVING_FONTS.find((f) => f.id === font)?.name}`}
-                  />
-                )}
-                {gemstone && (
-                  <Row
-                    label="Birthstone"
-                    value={GEMSTONES.find((g) => g.id === gemstone)?.name || ""}
-                  />
-                )}
-                {charms.length > 0 && (
-                  <Row
-                    label="Charms"
-                    value={charms
-                      .map((c) => CHARMS.find((c2) => c2.id === c)?.name)
-                      .join(", ")}
-                  />
+                  <Row label="Engraving" value={`"${engraving}"`} />
                 )}
                 <div className="border-t border-border pt-3">
                   <div className="flex items-center justify-between">

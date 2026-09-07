@@ -4,6 +4,8 @@ import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { apiError, apiSuccess, generateId, generateOrderNumber, handleApiError } from "@/lib/api";
 import { eq } from "drizzle-orm";
+import { getStoreSettings } from "@/lib/db/store-settings";
+import { bulkDiscountForCart } from "@/lib/pricing";
 
 const orderItemSchema = z.object({
   productId: z.string().nullable(),
@@ -49,14 +51,28 @@ export async function POST(req: Request) {
       return apiError("Email does not match signed-in account", 400);
     }
 
+    const settings = await getStoreSettings();
+
     const subtotalUsd = data.items.reduce(
       (sum, item) => sum + item.unitPriceUsd * item.quantity,
       0
     );
+    // 2+ items in total (across any products) gets 20% off the whole order.
+    const bulkDiscountUsd = bulkDiscountForCart(
+      data.items.map((item) => ({
+        unitPrice: item.unitPriceUsd,
+        quantity: item.quantity,
+      }))
+    );
 
-    const FREE_SHIPPING_THRESHOLD = 150;
-    const shippingUsd = subtotalUsd >= FREE_SHIPPING_THRESHOLD ? 0 : 9;
-    const taxUsd = subtotalUsd * 0.05;
+    const shippingUsd =
+      !settings.shippingEnabled ||
+      subtotalUsd - bulkDiscountUsd >= settings.freeShippingThreshold
+        ? 0
+        : settings.standardShippingUsd;
+    const taxUsd = settings.vatEnabled
+      ? (subtotalUsd - bulkDiscountUsd) * (settings.taxRatePercent / 100)
+      : 0;
     const giftWrapUsd = data.giftWrap ? 8 : 0;
 
     let promoDiscount = 0;
@@ -77,7 +93,13 @@ export async function POST(req: Request) {
       }
     }
 
-    const totalUsd = subtotalUsd + shippingUsd + taxUsd + giftWrapUsd - promoDiscount;
+    const totalUsd =
+      subtotalUsd -
+      bulkDiscountUsd +
+      shippingUsd +
+      taxUsd +
+      giftWrapUsd -
+      promoDiscount;
 
     const orderId = generateId("ord");
     const orderNumber = generateOrderNumber();
@@ -97,6 +119,7 @@ export async function POST(req: Request) {
       totalUsd,
       promoCode: data.promoCode?.toUpperCase() || null,
       promoDiscount,
+      bulkDiscount: bulkDiscountUsd,
       giftWrap: data.giftWrap,
       giftNote: data.giftNote || null,
       shippingName: data.shippingName,

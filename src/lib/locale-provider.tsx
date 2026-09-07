@@ -64,7 +64,6 @@ const translations: Record<string, { en: string; ar: string }> = {
   "trust.handcrafted": { en: "Hand-finished in our atelier", ar: "مصنوعة يدويًا في مشغلنا" },
   "trust.metal": { en: "Hallmarked 18K & 925", ar: "معتمدة 18 قيراط و925" },
   "trust.delivery": { en: "Free Gulf-wide delivery", ar: "شحن مجاني لكافة دول الخليج" },
-  "trust.returns": { en: "30-day returns", ar: "إرجاع خلال 30 يوم" },
 };
 
 export function LocaleProvider({ children }: { children: React.ReactNode }) {

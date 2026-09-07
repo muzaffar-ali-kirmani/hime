@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { SlidersHorizontal, X } from "lucide-react";
 import { ProductCard } from "./product-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PRODUCTS, OCCASIONS } from "@/lib/data";
+import { OCCASIONS } from "@/lib/data";
 import type { Product, MetalFinish } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +41,33 @@ export function ProductListing({
     category: initialCategory || "all",
   });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load products from the database-backed API (includes admin-added products).
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const qs = new URLSearchParams({ limit: "200" });
+        if (initialCategory) qs.set("category", initialCategory);
+        const res = await fetch(`/api/products?${qs}`);
+        const json = await res.json();
+        if (!cancelled) setProducts(json.products || []);
+      } catch {
+        if (!cancelled) setProducts([]);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [initialCategory]);
 
   const filtered = useMemo(() => {
-    let result = [...PRODUCTS];
+    let result = [...products];
     if (filters.metal !== "all") {
       result = result.filter((p) =>
         p.variants.some((v) => v.metal === filters.metal)
@@ -70,7 +94,7 @@ export function ProductListing({
       result.sort((a, b) => (b.badge === "new" ? 1 : 0) - (a.badge === "new" ? 1 : 0));
     }
     return result;
-  }, [filters]);
+  }, [filters, products]);
 
   const activeFilterCount =
     (filters.metal !== "all" ? 1 : 0) +
@@ -85,7 +109,9 @@ export function ProductListing({
           {subtitle || "Collection"}
         </p>
         <h1 className="mt-1 font-serif text-4xl text-navy sm:text-5xl">{title}</h1>
-        <p className="mt-3 text-sm text-navy/60">{filtered.length} pieces</p>
+        <p className="mt-3 text-sm text-navy/60">
+          {loading ? "Loading…" : `${filtered.length} pieces`}
+        </p>
       </header>
 
       <div className="grid gap-8 lg:grid-cols-[260px_1fr]">
@@ -156,7 +182,9 @@ export function ProductListing({
         <div>
           {/* Desktop sort */}
           <div className="mb-5 hidden items-center justify-between lg:flex">
-            <p className="text-sm text-navy/60">{filtered.length} pieces</p>
+            <p className="text-sm text-navy/60">
+              {loading ? "Loading…" : `${filtered.length} pieces`}
+            </p>
             <select
               value={filters.sortBy}
               onChange={(e) =>
@@ -174,7 +202,11 @@ export function ProductListing({
             </select>
           </div>
 
-          {filtered.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-24 text-sm text-navy/60">
+              Loading pieces…
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="flex flex-col items-center gap-3 py-20 text-center">
               <p className="font-serif text-2xl text-navy">No matches yet</p>
               <p className="text-sm text-navy/60">

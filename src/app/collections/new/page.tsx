@@ -3,7 +3,7 @@ import { ProductListing } from "@/components/product-listing";
 import { FEATURED_COLLECTIONS, PRODUCTS } from "@/lib/data";
 
 export const metadata = {
-  title: "New & Trending — Lune",
+  title: "New & Trending — Hime",
 };
 
 export default function NewCollectionPage() {

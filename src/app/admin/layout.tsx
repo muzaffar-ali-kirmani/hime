@@ -13,6 +13,7 @@ import {
   LogOut,
   ExternalLink,
   Settings,
+  Ticket,
 } from "lucide-react";
 import { useStore } from "@/lib/store-provider";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ const NAV = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/reviews", label: "Reviews", icon: Star },
+  { href: "/admin/promo-codes", label: "Promo Codes", icon: Ticket },
   { href: "/admin/users", label: "Customers", icon: Users },
   { href: "/admin/content", label: "Homepage", icon: FileEdit },
   { href: "/admin/settings", label: "Settings", icon: Settings },

@@ -6,7 +6,7 @@ export function InstagramModule() {
     <section className="container-wide py-12 sm:py-16">
       <div className="mb-8 text-center">
         <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-gold">
-          @lune.jewellery · Tag us to be featured
+          @hime.jewellery · Tag us to be featured
         </p>
         <h2 className="mt-2 font-serif text-3xl text-navy sm:text-4xl">
           #MadeForYou

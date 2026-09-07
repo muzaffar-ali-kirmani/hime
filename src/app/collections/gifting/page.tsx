@@ -3,7 +3,7 @@ import { ProductListing } from "@/components/product-listing";
 import { Gift, Sparkles } from "lucide-react";
 
 export const metadata = {
-  title: "Gifting — Lune",
+  title: "Gifting — Hime",
 };
 
 export default function GiftingPage() {

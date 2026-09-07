@@ -1,8 +1,8 @@
 import { ShopLayout } from "@/components/shop-layout";
-import { Truck, RefreshCcw, Globe, Clock } from "lucide-react";
+import { Truck, Globe, Clock } from "lucide-react";
 
 export const metadata = {
-  title: "Shipping & Returns — Hime",
+  title: "Shipping & Delivery — Hime",
 };
 
 export default function ShippingPage() {
@@ -13,10 +13,10 @@ export default function ShippingPage() {
           <p className="text-[10px] font-medium uppercase tracking-[0.25em] text-gold">
             Help
           </p>
-          <h1 className="font-serif text-5xl text-navy">Shipping & Returns</h1>
+          <h1 className="font-serif text-5xl text-navy">Shipping & Delivery</h1>
           <p className="mx-auto mt-3 max-w-xl text-sm text-navy/65">
             We deliver across all six GCC countries — fast, tracked, and
-            duty-free. Free returns within 30 days on unworn pieces.
+            duty-free.
           </p>
         </header>
 
@@ -36,11 +36,6 @@ export default function ShippingPage() {
               icon: Globe,
               title: "Duty-free",
               text: "All duties and taxes included in our prices — no surprise fees on delivery.",
-            },
-            {
-              icon: RefreshCcw,
-              title: "30-day returns",
-              text: "Free returns on non-personalised pieces. 14-day exchange on personalised items.",
             },
           ].map((b) => (
             <div
@@ -85,15 +80,6 @@ export default function ShippingPage() {
                 </tbody>
               </table>
             </div>
-          </Section>
-
-          <Section title="Return policy">
-            <ul className="space-y-2 text-sm text-navy/80">
-              <li>• 30-day free returns on non-personalised pieces</li>
-              <li>• 14-day exchange on personalised items if unworn</li>
-              <li>• Items must be in their original packaging and condition</li>
-              <li>• Refunds processed within 5 business days of receipt</li>
-            </ul>
           </Section>
 
           <Section title="Order tracking">

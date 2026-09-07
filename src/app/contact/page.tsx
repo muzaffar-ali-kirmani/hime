@@ -37,10 +37,10 @@ export default function ContactPage() {
             <ContactCard
               icon={Mail}
               title="Email"
-              detail="hello@lune.jewellery"
+              detail="hello@hime.jewellery"
               sub="Reply within 4 hours"
               cta="Send email"
-              href="mailto:hello@lune.jewellery"
+              href="mailto:hello@hime.jewellery"
             />
             <ContactCard
               icon={MapPin}

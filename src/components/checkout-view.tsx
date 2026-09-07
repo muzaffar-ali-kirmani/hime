@@ -24,7 +24,7 @@ const PAYMENT_METHODS = [
 ];
 
 export function CheckoutView() {
-  const { cart, cartSubtotal, clearCart } = useStore();
+  const { cart, cartSubtotal, cartBulkDiscount, clearCart, settings } = useStore();
   const { currency, country, setCountry, language, t } = useLocale();
   const [step, setStep] = useState<"address" | "payment" | "review">("address");
   const [payment, setPayment] = useState("card");
@@ -46,9 +46,16 @@ export function CheckoutView() {
     saveInfo: true,
   });
 
-  const shipping = cartSubtotal >= 150 ? 0 : 9;
-  const tax = cartSubtotal * 0.05;
-  const total = cartSubtotal + shipping + tax;
+  const discountedSubtotal = cartSubtotal - cartBulkDiscount;
+  const shipping =
+    !settings.shippingEnabled ||
+    discountedSubtotal >= settings.freeShippingThreshold
+      ? 0
+      : settings.standardShippingUsd;
+  const tax = settings.vatEnabled
+    ? discountedSubtotal * (settings.taxRatePercent / 100)
+    : 0;
+  const total = cartSubtotal - cartBulkDiscount + shipping + tax;
 
   async function placeOrder() {
     setSubmitting(true);
@@ -431,9 +438,11 @@ export function CheckoutView() {
                         {item.variant.lengthCm && ` · ${item.variant.lengthCm}cm`}
                       </p>
                     </div>
-                    <p className="text-xs font-medium text-navy">
-                      {formatPrice(item.unitPrice * item.quantity, currency, language)}
-                    </p>
+                    <div className="text-right">
+                      <p className="text-xs font-medium text-navy">
+                        {formatPrice(item.unitPrice * item.quantity, currency, language)}
+                      </p>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -448,10 +457,18 @@ export function CheckoutView() {
                     {shipping === 0 ? "Free" : formatPrice(shipping, currency, language)}
                   </dd>
                 </div>
-                <div className="flex justify-between text-navy/70">
-                  <dt>VAT (5%)</dt>
-                  <dd>{formatPrice(tax, currency, language)}</dd>
-                </div>
+                {cartBulkDiscount > 0 && (
+                  <div className="flex justify-between text-success">
+                    <dt>Bulk discount (20% on 2+ items)</dt>
+                    <dd>-{formatPrice(cartBulkDiscount, currency, language)}</dd>
+                  </div>
+                )}
+                {settings.vatEnabled && (
+                  <div className="flex justify-between text-navy/70">
+                    <dt>VAT ({settings.taxRatePercent}%)</dt>
+                    <dd>{formatPrice(tax, currency, language)}</dd>
+                  </div>
+                )}
                 <div className="flex justify-between border-t border-border pt-2 font-serif text-base">
                   <dt className="text-navy">Total</dt>
                   <dd className="text-navy">{formatPrice(total, currency, language)}</dd>

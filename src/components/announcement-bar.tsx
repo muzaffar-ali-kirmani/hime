@@ -1,17 +1,25 @@
 "use client";
 
 import { useLocale } from "@/lib/locale-provider";
-import { formatPrice, FREE_SHIPPING_THRESHOLD_USD } from "@/lib/locale";
+import { formatPrice } from "@/lib/locale";
+import { useStore } from "@/lib/store-provider";
 import { Truck, Sparkles } from "lucide-react";
 
 export function AnnouncementBar() {
   const { currency, t } = useLocale();
-  const threshold = formatPrice(FREE_SHIPPING_THRESHOLD_USD, currency);
+  const { settings } = useStore();
+  const threshold = formatPrice(settings.freeShippingThreshold, currency);
+  const shippingMsg = settings.shippingEnabled
+    ? `${t("free.shipping")} ${threshold}`
+    : "Free shipping on every order";
 
   const messages = [
-    { icon: Truck, text: `${t("free.shipping")} ${threshold}` },
+    {
+      icon: Truck,
+      text: settings.announcement || shippingMsg,
+    },
     { icon: Sparkles, text: "Use code WELCOME15 for 15% off your first order" },
-    { icon: Truck, text: "Free Gulf-wide delivery on every order" },
+    { icon: Truck, text: shippingMsg },
   ];
 
   return (

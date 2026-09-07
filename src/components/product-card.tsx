@@ -6,6 +6,8 @@ import { Heart, Plus, Star } from "lucide-react";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import type { Product } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -20,12 +22,20 @@ export function ProductCard({
 }) {
   const { addToCart, toggleWishlist, isWishlisted } = useStore();
   const { currency, language } = useLocale();
+  const router = useRouter();
   const wishlisted = isWishlisted(product.id);
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     const firstVariant = product.variants.find((v) => v.inStock);
     if (!firstVariant) return;
+    // Engraved products can't be quick-added — send the customer to the
+    // product page where they must enter the engraving.
+    if (product.personalization?.engraving) {
+      toast.error("Please choose options and add your engraving on the product page");
+      router.push(`/product/${product.slug}`);
+      return;
+    }
     addToCart({
       productId: product.id,
       productSlug: product.slug,

@@ -10,7 +10,7 @@ export function JewelleryClubModule() {
       <div className="grid items-center gap-8 rounded-[2rem] bg-gradient-to-br from-sand to-blush p-8 sm:p-12 lg:grid-cols-2 lg:gap-12 lg:p-16">
         <div className="space-y-5 text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-cream/60 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-gold">
-            <Crown className="size-3" /> Lune Jewellery Club
+            <Crown className="size-3" /> Hime Jewellery Club
           </span>
           <h2 className="font-serif text-4xl text-navy sm:text-5xl">
             Join the inner circle.

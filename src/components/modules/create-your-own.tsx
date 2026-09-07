@@ -22,8 +22,8 @@ export function CreateYourOwnModule() {
             <span className="italic text-gold">that's uniquely hers.</span>
           </h2>
           <p className="mx-auto max-w-md text-sm leading-relaxed text-cream/70 sm:text-base">
-            Choose the metal, the length, the gemstone. Engrave her initial,
-            her name, her secret message. We hand-finish it in 5–7 days.
+            Choose the metal, the length, the engraving. We hand-finish it in
+            5–7 days.
           </p>
           <Button
             asChild

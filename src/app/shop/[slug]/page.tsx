@@ -14,9 +14,9 @@ export async function generateMetadata({
 }) {
   const { slug } = await params;
   const category = CATEGORIES.find((c) => c.id === slug);
-  if (!category) return { title: "Lune" };
+  if (!category) return { title: "Hime" };
   return {
-    title: `${category.name} — Lune`,
+    title: `${category.name} — Hime`,
     description: `Shop our ${category.name.toLowerCase()} collection.`,
   };
 }

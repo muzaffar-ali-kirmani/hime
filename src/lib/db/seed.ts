@@ -1,18 +1,23 @@
-import Database from "better-sqlite3";
-import path from "path";
-import fs from "fs";
+import { readFileSync } from "fs";
 
-const dbPath =
-  process.env.DATABASE_URL?.replace(/^file:/, "") ||
-  path.join(process.cwd(), "data", "hime.db");
-
-const dir = path.dirname(dbPath);
-if (!fs.existsSync(dir)) {
-  fs.mkdirSync(dir, { recursive: true });
+// Load .env manually (tsx doesn't load it automatically)
+try {
+  for (const line of readFileSync(".env", "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+    if (m && !process.env[m[1]]) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+} catch {
+  // fall through to process env
 }
 
-const sqlite = new Database(dbPath);
-sqlite.pragma("foreign_keys = ON");
+import { db, schema } from "./index";
+import { products, productVariants, promoCodes } from "./schema";
+
+const svgFor = (label: string, metal: string) => {
+  const g = metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0";
+  const d = metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8";
+  return `data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 750'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F7F3EB'/%3E%3Cstop offset='1' stop-color='%23EFE7D8'/%3E%3C/linearGradient%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${g}'/%3E%3Cstop offset='1' stop-color='${d}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='750' fill='url(%23g)'/%3E%3Ccircle cx='300' cy='320' r='110' fill='url(%23m)' opacity='0.85'/%3E%3Ccircle cx='300' cy='320' r='60' fill='%23F7F3EB'/%3E%3Ctext x='300' y='450' font-family='Cormorant Garamond' font-size='34' fill='%231D2A44' text-anchor='middle' font-style='italic'%3E${label}%3C/text%3E%3C/svg%3E`;
+};
 
 const PRODUCTS_SEED = [
   {
@@ -35,7 +40,6 @@ const PRODUCTS_SEED = [
     occasion: ["Birthday", "Anniversary", "Just Because"],
     personalization: {
       engraving: { maxLength: 1, placeholder: "A" },
-      gemstone: true,
       length: { options: [40, 45, 50], default: 45 },
     },
     variants: [
@@ -70,7 +74,6 @@ const PRODUCTS_SEED = [
     tags: ["birthstone", "engravable", "18K"],
     occasion: ["Birthday", "Mother's Day"],
     personalization: {
-      gemstone: true,
       engraving: { maxLength: 12, placeholder: "Engrave a name" },
       length: { options: [40, 45, 50], default: 45 },
     },
@@ -107,36 +110,6 @@ const PRODUCTS_SEED = [
       { id: "silver-45", metal: "silver", lengthCm: 45, price: 159, inStock: true, stockCount: 12 },
       { id: "silver-50", metal: "silver", lengthCm: 50, price: 159, inStock: true, stockCount: 8 },
       { id: "silver-55", metal: "silver", lengthCm: 55, price: 159, inStock: false, madeToOrder: true, productionDays: "7-10 days" },
-    ],
-  },
-  {
-    id: "p-004",
-    slug: "rosa-charm-bracelet",
-    name: "Rosa Charm Bracelet",
-    nameAr: "سوار روزا بالقلائد",
-    description:
-      "Mix, match, make it yours. The Rosa Charm Bracelet is the start of a story — add initials, birthstones and tiny talismans, one for every chapter.",
-    category: "bracelets",
-    basePrice: 119,
-    badge: "bestseller",
-    rating: 4.8,
-    reviewCount: 567,
-    materials: ["18K Rose Gold Vermeil"],
-    careInstructions: "Store dry. Polish gently with the included cloth.",
-    isHypoallergenic: true,
-    tags: ["charm", "engravable", "stackable"],
-    occasion: ["Birthday", "Anniversary", "Just Because"],
-    personalization: {
-      charm: true,
-      engraving: { maxLength: 8, placeholder: "Add a word" },
-      length: { options: [16, 18, 20], default: 18 },
-    },
-    variants: [
-      { id: "rose-gold-16", metal: "rose-gold", lengthCm: 16, price: 134, inStock: true, stockCount: 9 },
-      { id: "rose-gold-18", metal: "rose-gold", lengthCm: 18, price: 134, inStock: true, stockCount: 15 },
-      { id: "rose-gold-20", metal: "rose-gold", lengthCm: 20, price: 134, inStock: true, stockCount: 7 },
-      { id: "gold-18", metal: "gold", lengthCm: 18, price: 119, inStock: true, stockCount: 8 },
-      { id: "silver-18", metal: "silver", lengthCm: 18, price: 94, inStock: true, stockCount: 11 },
     ],
   },
   {
@@ -247,34 +220,6 @@ const PRODUCTS_SEED = [
     ],
   },
   {
-    id: "p-009",
-    slug: "layla-charm-set",
-    name: "Layla Charm Set",
-    nameAr: "طقم ليلى بالقلائد",
-    description:
-      "Three charms, one story. The Layla Charm Set comes with a heart, an initial and a birthstone — designed to layer with our Rosa Bracelet.",
-    category: "initial-charm",
-    basePrice: 79,
-    compareAtPrice: 99,
-    badge: "sale",
-    rating: 4.8,
-    reviewCount: 234,
-    materials: ["18K Rose Gold Vermeil"],
-    careInstructions: "Store dry in original pouch.",
-    isHypoallergenic: true,
-    tags: ["charm", "engravable", "set"],
-    occasion: ["Birthday", "Just Because"],
-    personalization: {
-      engraving: { maxLength: 1, placeholder: "A" },
-      charm: true,
-    },
-    variants: [
-      { id: "rose-gold", metal: "rose-gold", price: 79, inStock: true, stockCount: 14 },
-      { id: "gold", metal: "gold", price: 79, inStock: true, stockCount: 9 },
-      { id: "silver", metal: "silver", price: 54, inStock: true, stockCount: 12 },
-    ],
-  },
-  {
     id: "p-010",
     slug: "hind-statement-earrings",
     name: "Hind Statement Earrings",
@@ -359,93 +304,82 @@ const PROMO_CODES = [
   { code: "GIFT10", type: "fixed", amount: 10, minOrderUsd: 75 },
 ];
 
-const insertProduct = sqlite.prepare(`
-  INSERT OR REPLACE INTO products (
-    id, slug, name, name_ar, description, description_ar, category,
-    base_price, compare_at_price, currency, images, badge, rating, review_count,
-    materials, care_instructions, is_halal_friendly, is_hypoallergenic,
-    tags, occasion, personalization, is_active
-  ) VALUES (
-    @id, @slug, @name, @nameAr, @description, @descriptionAr, @category,
-    @basePrice, @compareAtPrice, 'USD', @images, @badge, @rating, @reviewCount,
-    @materials, @careInstructions, @isHalalFriendly, @isHypoallergenic,
-    @tags, @occasion, @personalization, 1
-  )
-`);
-
-const insertVariant = sqlite.prepare(`
-  INSERT OR REPLACE INTO product_variants (
-    id, product_id, metal, length_cm, size, price, in_stock, made_to_order, production_days, stock_count
-  ) VALUES (
-    @id, @productId, @metal, @lengthCm, @size, @price, @inStock, @madeToOrder, @productionDays, @stockCount
-  )
-`);
-
-const insertPromo = sqlite.prepare(`
-  INSERT OR REPLACE INTO promo_codes (code, type, amount, min_order_usd, is_active)
-  VALUES (@code, @type, @amount, @minOrderUsd, 1)
-`);
-
-const svgFor = (label: string, metal: string) => {
-  const g = metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0";
-  const d = metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8";
-  return `data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 750'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F7F3EB'/%3E%3Cstop offset='1' stop-color='%23EFE7D8'/%3E%3C/linearGradient%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${g}'/%3E%3Cstop offset='1' stop-color='${d}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='750' fill='url(%23g)'/%3E%3Ccircle cx='300' cy='320' r='110' fill='url(%23m)' opacity='0.85'/%3E%3Ccircle cx='300' cy='320' r='60' fill='%23F7F3EB'/%3E%3Ctext x='300' y='450' font-family='Cormorant Garamond' font-size='34' fill='%231D2A44' text-anchor='middle' font-style='italic'%3E${label}%3C/text%3E%3C/svg%3E`;
-};
-
 let productCount = 0;
 let variantCount = 0;
 
-const seed = sqlite.transaction(() => {
-  for (const p of PRODUCTS_SEED) {
-    const imageMetal = p.variants[0]?.metal || "gold";
-    const label = p.name.split(" ")[0];
-    insertProduct.run({
-      id: p.id,
-      slug: p.slug,
-      name: p.name,
-      nameAr: p.nameAr,
-      description: p.description,
-      descriptionAr: null,
-      category: p.category,
-      basePrice: p.basePrice,
-      compareAtPrice: p.compareAtPrice || null,
-      images: JSON.stringify([svgFor(label, imageMetal)]),
-      badge: p.badge || null,
-      rating: p.rating,
-      reviewCount: p.reviewCount,
-      materials: JSON.stringify(p.materials),
-      careInstructions: p.careInstructions,
-      isHalalFriendly: p.isHalalFriendly ? 1 : 0,
-      isHypoallergenic: p.isHypoallergenic ? 1 : 0,
-      tags: JSON.stringify(p.tags),
-      occasion: JSON.stringify(p.occasion || []),
-      personalization: JSON.stringify(p.personalization || {}),
-    });
-    productCount++;
+async function seed() {
+  await db.transaction(async (tx) => {
+    // Idempotent: clear seed-managed tables first (children cascade from products)
+    await tx.delete(productVariants);
+    await tx.delete(products);
+    await tx.delete(promoCodes);
 
-    for (const v of p.variants as any[]) {
-      insertVariant.run({
-        id: `${p.id}-${v.id}`,
-        productId: p.id,
-        metal: v.metal,
-        lengthCm: v.lengthCm || null,
-        size: v.size || null,
-        price: v.price,
-        inStock: v.inStock ? 1 : 0,
-        madeToOrder: v.madeToOrder ? 1 : 0,
-        productionDays: v.productionDays || null,
-        stockCount: v.stockCount || 0,
+    for (const p of PRODUCTS_SEED) {
+      const imageMetal = p.variants[0]?.metal || "gold";
+      const label = p.name.split(" ")[0];
+      await tx.insert(products).values({
+        id: p.id,
+        slug: p.slug,
+        name: p.name,
+        nameAr: p.nameAr ?? null,
+        description: p.description,
+        descriptionAr: null,
+        category: p.category,
+        basePrice: p.basePrice,
+        compareAtPrice: (p as { compareAtPrice?: number }).compareAtPrice ?? null,
+        images: [svgFor(label, imageMetal)],
+        badge: p.badge || null,
+        rating: p.rating,
+        reviewCount: p.reviewCount,
+        materials: p.materials,
+        careInstructions: p.careInstructions,
+        isHalalFriendly: !!p.isHalalFriendly,
+        isHypoallergenic: !!p.isHypoallergenic,
+        tags: p.tags,
+        occasion: p.occasion || [],
+        personalization: p.personalization || {},
+        isActive: true,
       });
-      variantCount++;
+      productCount++;
+
+      for (const v of p.variants as any[]) {
+        await tx.insert(productVariants).values({
+          id: `${p.id}-${v.id}`,
+          productId: p.id,
+          metal: v.metal,
+          lengthCm: v.lengthCm ?? null,
+          size: v.size ?? null,
+          // All metal finishes are priced the same.
+          price: p.basePrice,
+          inStock: !!v.inStock,
+          madeToOrder: !!v.madeToOrder,
+          productionDays: v.productionDays || null,
+          stockCount: v.stockCount || 0,
+        });
+        variantCount++;
+      }
     }
-  }
 
-  for (const promo of PROMO_CODES) {
-    insertPromo.run(promo);
-  }
-});
+    for (const promo of PROMO_CODES) {
+      await tx.insert(promoCodes).values({
+        code: promo.code,
+        type: promo.type,
+        amount: promo.amount,
+        minOrderUsd: promo.minOrderUsd,
+        isActive: true,
+      });
+    }
+  });
+}
 
-seed();
-
-console.log(`✓ Seeded ${productCount} products, ${variantCount} variants, ${PROMO_CODES.length} promo codes`);
-sqlite.close();
+seed()
+  .then(() => {
+    console.log(
+      `✓ Seeded ${productCount} products, ${variantCount} variants, ${PROMO_CODES.length} promo codes`
+    );
+    process.exit(0);
+  })
+  .catch((e) => {
+    console.error("seed failed:", e);
+    process.exit(1);
+  });

@@ -8,8 +8,7 @@ export type ProductCategory =
   | "bracelets"
   | "rings"
   | "earrings"
-  | "anklets"
-  | "initial-charm";
+  | "anklets";
 
 export type Gemstone =
   | "diamond"

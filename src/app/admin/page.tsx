@@ -15,6 +15,17 @@ import {
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
 import { cn } from "@/lib/utils";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart";
+
+const chartConfig = {
+  revenue: { label: "Revenue", color: "#C9A66B" },
+} satisfies ChartConfig;
 
 interface Stats {
   orders: {
@@ -34,6 +45,8 @@ interface Stats {
   reviews: { total: number; pending: number };
   recentOrders: any[];
   topProducts: any[];
+  salesSeries: { day: string; orders: number; revenue: number }[];
+  aov: number;
 }
 
 export default function AdminDashboard() {
@@ -106,6 +119,116 @@ export default function AdminDashboard() {
           hint={`${stats.products.outOfStock} out of stock`}
           alert={stats.products.outOfStock > 0}
         />
+      </div>
+
+      {/* Sales chart + summary */}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="rounded-2xl border border-border bg-card p-5 lg:col-span-2">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="font-serif text-xl text-navy">
+                Sales — last 14 days
+              </h2>
+              <p className="mt-0.5 text-xs text-navy/55">
+                Daily revenue in {currency}
+              </p>
+            </div>
+            <span className="rounded-full bg-gold/15 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-navy">
+              {formatPrice(stats.orders.revenue30d, currency, language)} / 30d
+            </span>
+          </div>
+          <ChartContainer
+            config={chartConfig}
+            className="mt-4 !aspect-auto h-[280px] w-full"
+          >
+            <AreaChart
+              data={stats.salesSeries}
+              margin={{ left: 0, right: 0, top: 8, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="5%"
+                    stopColor="var(--color-revenue)"
+                    stopOpacity={0.45}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="var(--color-revenue)"
+                    stopOpacity={0.03}
+                  />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} stroke="var(--border)" />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                width={44}
+                tick={{ fontSize: 11, fill: "var(--muted-foreground)" }}
+                tickFormatter={(v: number) =>
+                  new Intl.NumberFormat(
+                    language === "ar" ? "ar-SA" : "en-US",
+                    { notation: "compact", maximumFractionDigits: 1 }
+                  ).format(Number(v))
+                }
+              />
+              <ChartTooltip
+                cursor={{ stroke: "var(--border)" }}
+                content={
+                  <ChartTooltipContent
+                    formatter={(value) =>
+                      formatPrice(Number(value), currency, language)
+                    }
+                  />
+                }
+              />
+              <Area
+                dataKey="revenue"
+                type="monotone"
+                stroke="var(--color-revenue)"
+                strokeWidth={2}
+                fill="url(#fillRevenue)"
+              />
+            </AreaChart>
+          </ChartContainer>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <h2 className="font-serif text-xl text-navy">Summary</h2>
+          <dl className="mt-4 space-y-4">
+            <SummaryRow
+              label="Average order value"
+              value={formatPrice(stats.aov, currency, language)}
+            />
+            <SummaryRow
+              label="Total revenue"
+              value={formatPrice(stats.orders.revenueTotal, currency, language)}
+            />
+            <SummaryRow
+              label="Total orders"
+              value={String(stats.orders.total)}
+            />
+            <SummaryRow
+              label="Active products"
+              value={`${stats.products.active} of ${stats.products.total}`}
+            />
+            <SummaryRow
+              label="Customers"
+              value={String(stats.users.total)}
+            />
+            <SummaryRow
+              label="Reviews"
+              value={String(stats.reviews.total)}
+            />
+          </dl>
+        </div>
       </div>
 
       {/* Secondary stats */}
@@ -248,6 +371,15 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-border/50 pb-3 text-sm last:border-0 last:pb-0">
+      <dt className="text-navy/60">{label}</dt>
+      <dd className="font-medium text-navy">{value}</dd>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { ProductListing } from "@/components/product-listing";
 
 export const metadata = {
-  title: "Shop All — Lune",
+  title: "Shop All — Hime",
   description: "Explore all personalised jewellery pieces.",
 };
 

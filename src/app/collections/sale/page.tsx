@@ -2,7 +2,7 @@ import { ShopLayout } from "@/components/shop-layout";
 import { ProductListing } from "@/components/product-listing";
 
 export const metadata = {
-  title: "Sale — Lune",
+  title: "Sale — Hime",
 };
 
 export default function SalePage() {

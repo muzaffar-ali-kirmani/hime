@@ -1,10 +1,28 @@
 import { notFound } from "next/navigation";
 import { ShopLayout } from "@/components/shop-layout";
 import { ProductDetail } from "@/components/product-detail";
-import { PRODUCTS, getProduct } from "@/lib/data";
+import { db, schema } from "@/lib/db";
+import { eq, and } from "drizzle-orm";
+import type { Product } from "@/lib/types";
 
-export function generateStaticParams() {
-  return PRODUCTS.map((p) => ({ slug: p.slug }));
+// DB-backed product page
+export const dynamic = "force-dynamic";
+
+async function getProductBySlug(slug: string) {
+  const product = await db
+    .select()
+    .from(schema.products)
+    .where(and(eq(schema.products.slug, slug), eq(schema.products.isActive, true)))
+    .limit(1);
+
+  if (product.length === 0) return null;
+
+  const variants = await db
+    .select()
+    .from(schema.productVariants)
+    .where(eq(schema.productVariants.productId, product[0].id));
+
+  return { ...product[0], variants } as unknown as Product;
 }
 
 export async function generateMetadata({
@@ -13,10 +31,10 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProduct(slug);
-  if (!product) return { title: "Lune" };
+  const product = await getProductBySlug(slug);
+  if (!product) return { title: "Hime" };
   return {
-    title: `${product.name} — Lune`,
+    title: `${product.name} — Hime`,
     description: product.description,
   };
 }
@@ -27,7 +45,7 @@ export default async function ProductPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getProductBySlug(slug);
   if (!product) notFound();
 
   return (

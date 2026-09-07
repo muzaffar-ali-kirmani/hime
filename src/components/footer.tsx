@@ -18,7 +18,6 @@ export function Footer() {
         { label: "Rings", href: "/shop/rings" },
         { label: "Earrings", href: "/shop/earrings" },
         { label: "Anklets", href: "/shop/anklets" },
-        { label: "Initials & Charms", href: "/shop/initial-charm" },
       ],
     },
     {
@@ -35,7 +34,7 @@ export function Footer() {
       title: "Help",
       links: [
         { label: "FAQ", href: "/faq" },
-        { label: "Shipping & Returns", href: "/shipping" },
+        { label: "Shipping & Delivery", href: "/shipping" },
         { label: "Size Guide", href: "/size-guide" },
         { label: "Jewellery Care", href: "/care" },
         { label: "Track Order", href: "/account/orders" },
@@ -59,7 +58,7 @@ export function Footer() {
           {/* Newsletter */}
           <div className="space-y-4">
             <Link href="/" className="inline-block">
-              <span className="font-serif text-3xl text-navy">Lune</span>
+              <span className="font-serif text-3xl text-navy">Hime</span>
             </Link>
             <p className="max-w-sm text-sm leading-relaxed text-navy/70">
               Premium personalised jewellery, made by hand and made for her story.
@@ -145,7 +144,7 @@ export function Footer() {
         </div>
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-6 text-xs text-navy/60 sm:flex-row sm:items-center">
-          <p>© {new Date().getFullYear()} Lune Jewellery. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Hime Jewellery. All rights reserved.</p>
           <div className="flex items-center gap-3">
             <span className="rounded border border-border bg-card px-2 py-1">VISA</span>
             <span className="rounded border border-border bg-card px-2 py-1">Mastercard</span>
