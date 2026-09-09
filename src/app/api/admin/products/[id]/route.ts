@@ -7,9 +7,9 @@ import { eq } from "drizzle-orm";
 
 const updateSchema = z.object({
   name: z.string().optional(),
-  nameAr: z.string().optional(),
+  nameAr: z.string().nullable().optional(),
   description: z.string().optional(),
-  descriptionAr: z.string().optional(),
+  descriptionAr: z.string().nullable().optional(),
   category: z.string().optional(),
   basePrice: z.number().min(0).optional(),
   compareAtPrice: z.number().nullable().optional(),

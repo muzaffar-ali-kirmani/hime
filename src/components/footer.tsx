@@ -24,7 +24,8 @@ export function Footer() {
       title: "Brand",
       links: [
         { label: "Our Story", href: "/about" },
-        { label: "Create Your Own", href: "/customize" },
+        // Hidden for now — re-enable to restore the footer link
+        // { label: "Create Your Own", href: "/customize" },
         { label: "Sustainability", href: "/about#craft" },
         { label: "Jewellery Club", href: "/club" },
         { label: "Gift Cards", href: "/gift-cards" },
@@ -145,6 +146,7 @@ export function Footer() {
 
         <div className="mt-10 flex flex-col items-start justify-between gap-4 border-t border-border/40 pt-6 text-xs text-navy/60 sm:flex-row sm:items-center">
           <p>© {new Date().getFullYear()} Hime Jewellery. All rights reserved.</p>
+          {/* Payment badges hidden for now — re-enable when card/BNPL methods return
           <div className="flex items-center gap-3">
             <span className="rounded border border-border bg-card px-2 py-1">VISA</span>
             <span className="rounded border border-border bg-card px-2 py-1">Mastercard</span>
@@ -152,6 +154,7 @@ export function Footer() {
             <span className="rounded border border-border bg-card px-2 py-1">Tabby</span>
             <span className="rounded border border-border bg-card px-2 py-1">Tamara</span>
           </div>
+          */}
         </div>
       </div>
     </footer>

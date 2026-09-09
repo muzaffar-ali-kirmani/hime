@@ -353,6 +353,8 @@ function ProductEditDrawer({
         images: data.images.filter((i: string) => i.trim()),
         compareAtPrice: data.compareAtPrice || null,
         badge: data.badge || null,
+        // Uniform pricing: every variant is priced at the product's base price.
+        variants: (data.variants || []).map((v: any) => ({ ...v, price: Number(data.basePrice) || 0 })),
       };
       const url = isNew
         ? "/api/admin/products"
@@ -701,13 +703,14 @@ function ProductEditDrawer({
             <div className="rounded-2xl border border-border bg-card p-5">
               <h3 className="mb-3 text-sm font-medium text-navy">Variants</h3>
               <p className="mb-3 text-xs text-navy/55">
-                Configure metal, size, and stock for each variant.
+                Configure metal and length for each variant — price follows the
+                base price.
               </p>
               <div className="space-y-3">
                 {data.variants.map((v: any, i: number) => (
                   <div
                     key={i}
-                    className="grid items-end gap-2 rounded-lg bg-cream/40 p-3 sm:grid-cols-6"
+                    className="grid items-end gap-2 rounded-lg bg-cream/40 p-3 sm:grid-cols-3"
                   >
                     <Field label="Metal">
                       <select
@@ -741,44 +744,7 @@ function ProductEditDrawer({
                         className="h-9"
                       />
                     </Field>
-                    <Field label="Size">
-                      <Input
-                        value={v.size || ""}
-                        onChange={(e) => {
-                          const vs = [...data.variants];
-                          vs[i] = { ...v, size: e.target.value || null };
-                          setData({ ...data, variants: vs });
-                        }}
-                        className="h-9"
-                      />
-                    </Field>
-                    <Field label="Price">
-                      <Input
-                        type="number"
-                        value={v.price}
-                        onChange={(e) => {
-                          const vs = [...data.variants];
-                          vs[i] = { ...v, price: parseFloat(e.target.value) || 0 };
-                          setData({ ...data, variants: vs });
-                        }}
-                        className="h-9"
-                      />
-                    </Field>
-                    <Field label="Stock">
-                      <Input
-                        type="number"
-                        value={v.stockCount}
-                        onChange={(e) => {
-                          const vs = [...data.variants];
-                          vs[i] = {
-                            ...v,
-                            stockCount: parseInt(e.target.value) || 0,
-                          };
-                          setData({ ...data, variants: vs });
-                        }}
-                        className="h-9"
-                      />
-                    </Field>
+
                     <Button
                       size="sm"
                       variant="outline"

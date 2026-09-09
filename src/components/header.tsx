@@ -28,10 +28,11 @@ export function Header() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const navItems = [
+  const navItems: { label: string; href: string; highlight?: boolean }[] = [
     { label: "Shop by Category", href: "/shop" },
     { label: "New & Trending", href: "/collections/new" },
-    { label: "Create Your Own", href: "/customize", highlight: true },
+    // Hidden for now — re-enable to restore the nav link
+    // { label: "Create Your Own", href: "/customize", highlight: true },
     { label: "Gifting", href: "/collections/gifting" },
     { label: "Sale", href: "/collections/sale" },
   ];

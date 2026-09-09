@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Lock, CreditCard, Apple, Check, ChevronLeft } from "lucide-react";
+import { Lock, CreditCard, Apple, Check, ChevronLeft } from "lucide-react"; // CreditCard/Apple kept for re-enabling hidden payment methods
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,11 +16,12 @@ import { cn } from "@/lib/utils";
 import { api } from "@/lib/api-client";
 import { toast } from "sonner";
 
+// Hidden for now — re-enable to restore card / Apple Pay / Tabby / Tamara
+// { id: "card", label: "Credit / Debit Card", icon: CreditCard },
+// { id: "apple", label: "Apple Pay", icon: Apple },
+// { id: "tabby", label: "Tabby · 4 payments", icon: "T" },
+// { id: "tamara", label: "Tamara · Pay in 3", icon: "T" },
 const PAYMENT_METHODS = [
-  { id: "card", label: "Credit / Debit Card", icon: CreditCard },
-  { id: "apple", label: "Apple Pay", icon: Apple },
-  { id: "tabby", label: "Tabby · 4 payments", icon: "T" },
-  { id: "tamara", label: "Tamara · Pay in 3", icon: "T" },
   { id: "cod", label: "Cash on Delivery", icon: "₪" },
 ];
 
@@ -27,7 +29,7 @@ export function CheckoutView() {
   const { cart, cartSubtotal, cartBulkDiscount, clearCart, settings } = useStore();
   const { currency, country, setCountry, language, t } = useLocale();
   const [step, setStep] = useState<"address" | "payment" | "review">("address");
-  const [payment, setPayment] = useState("card");
+  const [payment, setPayment] = useState("cod");
   const [guestEmail, setGuestEmail] = useState("");
   const [isGuest, setIsGuest] = useState(true);
   const [orderComplete, setOrderComplete] = useState(false);
