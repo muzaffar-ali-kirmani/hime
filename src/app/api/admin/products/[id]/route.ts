@@ -23,6 +23,21 @@ const updateSchema = z.object({
   occasion: z.array(z.string()).optional(),
   personalization: z.any().optional(),
   isActive: z.boolean().optional(),
+  variants: z
+    .array(
+      z.object({
+        id: z.string().optional(),
+        metal: z.string(),
+        lengthCm: z.number().nullable().optional(),
+        size: z.string().nullable().optional(),
+        price: z.number().min(0),
+        inStock: z.boolean().default(true),
+        madeToOrder: z.boolean().default(false),
+        productionDays: z.string().nullable().optional(),
+        stockCount: z.number().int().min(0).default(0),
+      })
+    )
+    .optional(),
 });
 
 async function requireAdmin() {
@@ -44,10 +59,49 @@ export async function PATCH(
     const body = await req.json();
     const data = updateSchema.parse(body);
 
-    await db
-      .update(schema.products)
-      .set(data)
-      .where(eq(schema.products.id, id));
+    // Uniform pricing: variants (when provided) are always priced at the base price.
+    let basePrice = data.basePrice;
+    if (basePrice === undefined) {
+      const rows = await db
+        .select({ basePrice: schema.products.basePrice })
+        .from(schema.products)
+        .where(eq(schema.products.id, id))
+        .limit(1);
+      basePrice = rows[0]?.basePrice;
+    }
+    if (data.variants && basePrice !== undefined) {
+      for (const v of data.variants) v.price = basePrice;
+    }
+
+    const { variants, ...productFields } = data;
+
+    if (Object.keys(productFields).length > 0) {
+      await db
+        .update(schema.products)
+        .set(productFields)
+        .where(eq(schema.products.id, id));
+    }
+
+    // Replace variants wholesale when provided.
+    if (variants) {
+      await db
+        .delete(schema.productVariants)
+        .where(eq(schema.productVariants.productId, id));
+      for (const v of variants) {
+        await db.insert(schema.productVariants).values({
+          id: v.id || crypto.randomUUID(),
+          productId: id,
+          metal: v.metal,
+          lengthCm: v.lengthCm || null,
+          size: v.size || null,
+          price: v.price,
+          inStock: v.inStock,
+          madeToOrder: v.madeToOrder,
+          productionDays: v.productionDays || null,
+          stockCount: v.stockCount,
+        });
+      }
+    }
 
     return apiSuccess({ success: true });
   } catch (err) {

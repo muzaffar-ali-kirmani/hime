@@ -80,6 +80,8 @@ export async function POST(req: Request) {
     await requireAdmin();
     const body = await req.json();
     const data = productSchema.parse(body);
+    // Uniform pricing: every variant is always priced at the base price.
+    for (const v of data.variants) v.price = data.basePrice;
 
     const existing = await db
       .select()

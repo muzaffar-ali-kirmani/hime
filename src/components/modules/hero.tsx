@@ -15,7 +15,7 @@ export function HeroModule() {
       <div className="container-wide grid items-center gap-8 py-12 lg:grid-cols-[1.1fr_1fr] lg:gap-12 lg:py-20">
         <div className="space-y-5 text-center lg:text-left">
           <span className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-cream/60 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.2em] text-gold backdrop-blur">
-            <span className="h-1 w-1 rounded-full bg-gold" /> Eid Collection 2026
+            <span className="h-1 w-1 rounded-full bg-gold" /> New Arrival
           </span>
           <h1 className="font-serif text-5xl font-light leading-[1.05] text-navy sm:text-6xl lg:text-7xl">
             <span className="block text-balance">
@@ -28,9 +28,10 @@ export function HeroModule() {
           <p className="mx-auto max-w-md text-base leading-relaxed text-navy/75 lg:mx-0 lg:text-lg">
             {isAr
               ? "مجوهرات شخصية مصنوعة يدويًا من الذهب عيار 18 والفضة الاسترلينية. صمّمي قطعة تحمل قصتها."
-              : "Hand-finished personalised jewellery in 18K gold and 925 sterling silver. Crafted to carry her name, her story."}
+              : "Hand-finished personalised jewellery gold plated and stainless steel. Crafted to carry her name, her story."}
           </p>
           <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row lg:justify-start">
+            {/* Create Your Own hidden for now — re-enable when the customizer returns
             <Button
               asChild
               className="rounded-full bg-navy px-7 py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
@@ -39,10 +40,10 @@ export function HeroModule() {
                 {t("create.your.own")} <ArrowRight className="ms-2 size-3.5" />
               </Link>
             </Button>
+            */}
             <Button
               asChild
-              variant="ghost"
-              className="rounded-full px-7 py-6 text-xs uppercase tracking-widest text-navy hover:bg-navy/5"
+              className="rounded-full bg-navy px-7 py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
             >
               <Link href="/shop">{t("shop.now")}</Link>
             </Button>

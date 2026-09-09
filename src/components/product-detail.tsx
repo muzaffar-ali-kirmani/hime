@@ -24,7 +24,7 @@ import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice, COUNTRIES } from "@/lib/locale";
 import type { Product, MetalFinish } from "@/lib/types";
-import { getProduct, PRODUCTS } from "@/lib/data";
+import { getProduct } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/product-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -126,10 +126,32 @@ export function ProductDetail({ product }: Props) {
     new Set(product.variants.filter((v) => v.size).map((v) => v.size))
   );
 
-  // "Complete the set" cross-sell
-  const relatedSet = PRODUCTS.filter(
-    (p) => p.id !== product.id && (p.category !== product.category || p.category === "earrings")
-  ).slice(0, 3);
+  // "Complete the set" cross-sell — live DB products, randomized on every load
+  const [relatedSet, setRelatedSet] = useState<Product[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/products?limit=100");
+        const json = await res.json();
+        if (cancelled) return;
+        const all: Product[] = (json.products || []).filter(
+          (p: Product) => p.id !== product.id
+        );
+        // Fisher–Yates shuffle so recommendations differ on each visit
+        for (let i = all.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [all[i], all[j]] = [all[j], all[i]];
+        }
+        setRelatedSet(all.slice(0, 3));
+      } catch {
+        if (!cancelled) setRelatedSet([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [product.id]);
 
   return (
     <section className="container-wide py-8 sm:py-12 lg:py-14">
