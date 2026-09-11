@@ -16,7 +16,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: "How long does it take to receive my order?",
-        a: "In-stock pieces ship within 24 hours and arrive in 3–5 days across the Gulf. Made-to-order and engraved pieces are hand-finished in 5–7 days, then shipped.",
+        a: "In-stock pieces ship in 10-12 working days and arrive across the Gulf. Made-to-order and engraved pieces are hand-finished in 5–7 days, then shipped.",
       },
       {
         q: "Can I edit or cancel my order after placing it?",

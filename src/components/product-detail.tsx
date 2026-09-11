@@ -456,7 +456,7 @@ export function ProductDetail({ product }: Props) {
               <span className="text-navy">
                 {selectedVariant.madeToOrder
                   ? "Made to order · Ships in 5–7 days"
-                  : "In stock · Ships within 24h"}
+                  : "In stock · Ships in 10-12 working days"}
               </span>
             </div>
             {settings.shippingEnabled &&

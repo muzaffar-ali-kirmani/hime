@@ -39,6 +39,7 @@ interface Stats {
     revenue7d: number;
     revenue30d: number;
     revenueTotal: number;
+    revenueSelected: number;
   };
   users: { total: number; new7d: number };
   products: { total: number; active: number; outOfStock: number };
@@ -47,6 +48,8 @@ interface Stats {
   topProducts: any[];
   salesSeries: { day: string; orders: number; revenue: number }[];
   aov: number;
+  range: string;
+  rangeLabel: string;
 }
 
 export default function AdminDashboard() {
