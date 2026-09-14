@@ -3,9 +3,10 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { apiError, apiSuccess, generateId, generateOrderNumber, handleApiError } from "@/lib/api";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { getStoreSettings } from "@/lib/db/store-settings";
 import { bulkDiscountForCart } from "@/lib/pricing";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const orderItemSchema = z.object({
   productId: z.string().nullable(),
@@ -43,6 +44,12 @@ const checkoutSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Order-flood / card-testing protection: 10 orders / hour per IP.
+    const rl = rateLimit(`order:${clientIp(req)}`, 10, 60 * 60_000);
+    if (!rl.ok) {
+      return apiError(`Too many orders. Try again in ${rl.retryAfter}s`, 429);
+    }
+
     const body = await req.json();
     const data = checkoutSchema.parse(body);
 
@@ -52,6 +59,49 @@ export async function POST(req: Request) {
     }
 
     const settings = await getStoreSettings();
+
+    // SECURITY: never trust client prices. Resolve every item's price from
+    // the DB variant; custom items (customizer) are validated below.
+    const variantIds = data.items
+      .filter((i) => i.variantId && !i.variantId.startsWith("custom-"))
+      .map((i) => i.variantId);
+    const dbVariants =
+      variantIds.length > 0
+        ? await db
+            .select({
+              id: schema.productVariants.id,
+              price: schema.productVariants.price,
+              inStock: schema.productVariants.inStock,
+              stockCount: schema.productVariants.stockCount,
+            })
+            .from(schema.productVariants)
+            .where(inArray(schema.productVariants.id, variantIds))
+        : [];
+    const variantById = new Map(dbVariants.map((v) => [v.id, v]));
+
+    for (const item of data.items) {
+      const isCustom = item.variantId.startsWith("custom-");
+      if (isCustom) {
+        // Customizer items: allow client price but only within a sane bound.
+        if (item.unitPriceUsd < 0 || item.unitPriceUsd > 10_000) {
+          return apiError("Invalid item price", 400);
+        }
+        continue;
+      }
+      const variant = variantById.get(item.variantId);
+      if (!variant) {
+        return apiError(`Unknown product variant: ${item.variantId}`, 400);
+      }
+      if (Math.abs(variant.price - item.unitPriceUsd) > 0.01) {
+        return apiError(
+          `Price mismatch for an item — please refresh your cart`,
+          409
+        );
+      }
+      if (!variant.inStock || variant.stockCount < item.quantity) {
+        return apiError(`An item in your cart is out of stock`, 409);
+      }
+    }
 
     const subtotalUsd = data.items.reduce(
       (sum, item) => sum + item.unitPriceUsd * item.quantity,

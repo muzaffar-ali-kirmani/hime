@@ -27,7 +27,7 @@ interface StoreContextValue {
   cartSubtotal: number;
   cartBulkDiscount: number;
   isAuthenticated: boolean;
-  user: { id: string; email: string; firstName: string; lastName: string } | null;
+  user: { id: string; email: string; firstName: string; lastName: string; role?: string } | null;
   userLoading: boolean;
   refreshUser: () => Promise<void>;
 }

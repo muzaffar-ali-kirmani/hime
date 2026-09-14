@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Search, X } from "lucide-react";
 import { ShopLayout } from "@/components/shop-layout";
 import { Input } from "@/components/ui/input";
-import { PRODUCTS } from "@/lib/data";
+import type { Product } from "@/lib/types";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
 import { Button } from "@/components/ui/button";
@@ -16,18 +16,36 @@ const POPULAR = ["Initial necklace", "Birthstone ring", "Pearl earrings", "Gold 
 export default function SearchPage() {
   const { currency, language } = useLocale();
   const [query, setQuery] = useState("");
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+
+  // Load the live catalogue once; filtering happens client-side below.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/products?limit=100");
+        const json = await res.json();
+        if (!cancelled) setAllProducts(json.products || []);
+      } catch {
+        if (!cancelled) setAllProducts([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const results = useMemo(() => {
     if (!query.trim()) return [];
     const q = query.toLowerCase();
-    return PRODUCTS.filter(
+    return allProducts.filter(
       (p) =>
         p.name.toLowerCase().includes(q) ||
         p.tags.some((t) => t.toLowerCase().includes(q)) ||
         p.category.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q)
     );
-  }, [query]);
+  }, [query, allProducts]);
 
   return (
     <ShopLayout>

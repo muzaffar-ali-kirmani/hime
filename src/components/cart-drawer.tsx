@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { X, Plus, Minus, ShoppingBag, Trash2, Gift, Tag } from "lucide-react";
+import { X, Plus, Minus, ShoppingBag, Trash2, Tag } from "lucide-react";
+import { toast } from "sonner";
 import {
   Sheet,
   SheetContent,
@@ -14,8 +15,8 @@ import { Input } from "@/components/ui/input";
 import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice } from "@/lib/locale";
-import { useState } from "react";
-import { PRODUCTS } from "@/lib/data";
+import { useState, useEffect } from "react";
+import type { Product } from "@/lib/types";
 
 export function CartDrawer() {
   const {
@@ -31,7 +32,8 @@ export function CartDrawer() {
   const { currency, t, language } = useLocale();
   const [promo, setPromo] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
-  const [giftWrap, setGiftWrap] = useState(false);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoCode, setPromoCode] = useState("");
 
   const freeShipThreshold = settings.freeShippingThreshold;
   const discountedSubtotal = cartSubtotal - cartBulkDiscount;
@@ -46,10 +48,38 @@ export function CartDrawer() {
     cartSubtotal -
     cartBulkDiscount +
     shipping +
-    (giftWrap ? 8 : 0) -
-    (promoApplied ? cartSubtotal * 0.15 : 0);
+    promoDiscount;
 
-  const upsellProduct = PRODUCTS.find((p) => p.id === "p-006");
+  // "Complete the set" upsell — a real product from the DB that isn't
+  // already in the cart, randomized on each cart open.
+  const [upsellProduct, setUpsellProduct] = useState<Product | null>(null);
+  const cartProductIds = new Set(cart.map((item) => item.productId));
+
+  useEffect(() => {
+    if (!cartOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/products?limit=100");
+        const json = await res.json();
+        if (cancelled) return;
+        const candidates: Product[] = (json.products || []).filter(
+          (p: Product) => !cartProductIds.has(p.id) && p.variants.some((v) => v.inStock)
+        );
+        if (candidates.length === 0) {
+          setUpsellProduct(null);
+          return;
+        }
+        setUpsellProduct(candidates[Math.floor(Math.random() * candidates.length)]);
+      } catch {
+        if (!cancelled) setUpsellProduct(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartOpen]);
 
   return (
     <Sheet open={cartOpen} onOpenChange={setCartOpen}>
@@ -197,7 +227,12 @@ export function CartDrawer() {
                   <p className="text-[10px] font-medium uppercase tracking-widest text-gold">
                     Complete the set
                   </p>
-                  <div className="mt-3 flex items-center gap-3">
+                  <Link
+                    href={`/product/${upsellProduct.slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-3 flex items-center gap-3"
+                  >
                     <div className="relative h-14 w-14 rounded-md bg-secondary">
                       <Image
                         src={upsellProduct.images[0]}
@@ -208,21 +243,17 @@ export function CartDrawer() {
                       />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-navy">
+                      <p className="text-sm font-medium text-navy group-hover:underline">
                         {upsellProduct.name}
                       </p>
                       <p className="text-xs text-navy/60">
                         {formatPrice(upsellProduct.basePrice, currency, language)}
                       </p>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="rounded-full text-xs"
-                    >
-                      Add
-                    </Button>
-                  </div>
+                    <span className="text-xs text-gold group-hover:underline">
+                      View
+                    </span>
+                  </Link>
                 </div>
               )}
             </div>
@@ -243,28 +274,39 @@ export function CartDrawer() {
                 <Button
                   size="sm"
                   variant="outline"
-                  onClick={() => {
-                    if (promo.toUpperCase() === "WELCOME15") setPromoApplied(true);
+                  onClick={async () => {
+                    const code = promo.trim();
+                    if (!code) return;
+                    try {
+                      const res = await fetch("/api/promo/validate", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          code,
+                          subtotalUsd: cartSubtotal - cartBulkDiscount,
+                        }),
+                      });
+                      const json = await res.json();
+                      if (!res.ok) {
+                        toast.error(json.error || "Invalid promo code");
+                        setPromoApplied(false);
+                        setPromoDiscount(0);
+                        setPromoCode("");
+                        return;
+                      }
+                      setPromoApplied(true);
+                      setPromoDiscount(json.discount || 0);
+                      setPromoCode(json.code || code.toUpperCase());
+                      toast.success(`${json.code || code.toUpperCase()} applied`);
+                    } catch {
+                      toast.error("Could not validate promo code");
+                    }
                   }}
                   className="rounded-full text-xs"
                 >
                   {t("apply")}
                 </Button>
               </div>
-
-              {/* Gift wrap toggle */}
-              <label className="mb-3 flex cursor-pointer items-center justify-between rounded-lg border border-border bg-card p-3">
-                <div className="flex items-center gap-2">
-                  <Gift className="size-4 text-gold" />
-                  <span className="text-xs text-navy">{t("gift.wrap")} · $8</span>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={giftWrap}
-                  onChange={(e) => setGiftWrap(e.target.checked)}
-                  className="accent-navy"
-                />
-              </label>
 
               {/* Totals */}
               <dl className="space-y-1.5 text-xs">
@@ -284,10 +326,10 @@ export function CartDrawer() {
                     <dd>-{formatPrice(cartBulkDiscount, currency, language)}</dd>
                   </div>
                 )}
-                {promoApplied && (
+                {promoApplied && promoDiscount > 0 && (
                   <div className="flex justify-between text-success">
-                    <dt>WELCOME15 (15% off)</dt>
-                    <dd>-{formatPrice(cartSubtotal * 0.15, currency, language)}</dd>
+                    <dt>{promoCode}</dt>
+                    <dd>-{formatPrice(promoDiscount, currency, language)}</dd>
                   </div>
                 )}
                 <div className="flex justify-between border-t border-border/60 pt-2 text-sm font-semibold text-navy">

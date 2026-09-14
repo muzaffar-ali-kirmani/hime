@@ -10,7 +10,10 @@ import {
   Percent,
   Receipt,
   Truck,
+  Plus,
+  Trash2,
 } from "lucide-react";
+import { MAX_ANNOUNCEMENTS } from "@/lib/settings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -106,6 +109,21 @@ export default function AdminSettingsPage() {
             <Input
               value={store.instagram}
               onChange={(e) => set({ instagram: e.target.value })}
+              placeholder="https://instagram.com/…"
+            />
+          </Field>
+          <Field label="Facebook">
+            <Input
+              value={store.facebook}
+              onChange={(e) => set({ facebook: e.target.value })}
+              placeholder="https://facebook.com/…"
+            />
+          </Field>
+          <Field label="TikTok">
+            <Input
+              value={store.tiktok}
+              onChange={(e) => set({ tiktok: e.target.value })}
+              placeholder="https://tiktok.com/@…"
             />
           </Field>
         </div>
@@ -260,13 +278,64 @@ export default function AdminSettingsPage() {
       </div>
 
       <div className="rounded-2xl border border-border bg-card p-5">
-        <h2 className="mb-4 font-serif text-xl text-navy">Announcement</h2>
-        <Field label="Site-wide banner text">
-          <Input
-            value={store.announcement}
-            onChange={(e) => set({ announcement: e.target.value })}
-          />
-        </Field>
+        <h2 className="mb-1 font-serif text-xl text-navy">Announcement</h2>
+        <p className="mb-4 text-xs text-navy/55">
+          Headlines shown in the banner at the top of every page — up to{" "}
+          {MAX_ANNOUNCEMENTS}. Edits apply when you press “Save settings”.
+        </p>
+
+        {store.announcements.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border bg-cream/40 p-6 text-center text-sm text-navy/60">
+            No announcements yet. Add your first headline below.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {store.announcements.map((text, i) => (
+              <li
+                key={i}
+                className="flex items-center gap-3 rounded-xl border border-border bg-cream/40 p-3"
+              >
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-navy text-[11px] font-semibold text-cream">
+                  {i + 1}
+                </span>
+                <Input
+                  value={text}
+                  aria-label={`Edit headline ${i + 1}`}
+                  placeholder="e.g. BUY 2 or more — 20% discount"
+                  onChange={(e) => {
+                    const next = [...store.announcements];
+                    next[i] = e.target.value;
+                    set({ announcements: next });
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 rounded-full px-3 text-destructive"
+                  aria-label={`Delete headline ${i + 1}`}
+                  onClick={() =>
+                    set({
+                      announcements: store.announcements.filter((_, j) => j !== i),
+                    })
+                  }
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {store.announcements.length < MAX_ANNOUNCEMENTS && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => set({ announcements: [...store.announcements, ""] })}
+            className="mt-3 rounded-full text-xs"
+          >
+            <Plus className="me-1.5 size-3" /> Add headline
+          </Button>
+        )}
       </div>
 
       <Button

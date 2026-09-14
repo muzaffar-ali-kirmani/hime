@@ -13,6 +13,7 @@ export async function GET() {
       lastName: user.lastName,
       phone: user.phone,
       country: user.country,
+      role: user.role,
     },
   });
 }

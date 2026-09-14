@@ -36,38 +36,53 @@ interface Stats {
     shipped: number;
     delivered: number;
     cancelled: number;
-    revenue7d: number;
-    revenue30d: number;
-    revenueTotal: number;
+    ordersSelected: number;
     revenueSelected: number;
+    placedSelected: number;
+    revenueTotal: number;
+    placedTotal: number;
   };
-  users: { total: number; new7d: number };
+  users: { total: number; newSelected: number };
   products: { total: number; active: number; outOfStock: number };
   reviews: { total: number; pending: number };
   recentOrders: any[];
   topProducts: any[];
   salesSeries: { day: string; orders: number; revenue: number }[];
   aov: number;
-  range: string;
+  range: "7d" | "30d" | "90d";
   rangeLabel: string;
+  rangeDays: number;
 }
+
+const RANGE_OPTIONS = [
+  { id: "7d" as const, label: "7 days" },
+  { id: "30d" as const, label: "30 days" },
+  { id: "90d" as const, label: "90 days" },
+];
 
 export default function AdminDashboard() {
   const { currency, language } = useLocale();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [range, setRange] = useState<"7d" | "30d" | "90d">("7d");
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
-        const res = await fetch("/api/admin/stats", { credentials: "include" });
+        const res = await fetch(`/api/admin/stats?range=${range}`, {
+          credentials: "include",
+        });
         const data = await res.json();
-        if (res.ok) setStats(data);
+        if (!cancelled && res.ok) setStats(data);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [range]);
 
   if (loading) {
     return <p className="text-sm text-navy/60">Loading dashboard…</p>;
@@ -89,31 +104,51 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-serif text-3xl text-navy sm:text-4xl">Dashboard</h1>
-        <p className="mt-1 text-sm text-navy/60">
-          Overview of your store's performance.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="font-serif text-3xl text-navy sm:text-4xl">Dashboard</h1>
+          <p className="mt-1 text-sm text-navy/60">
+            Overview of your store's performance.
+          </p>
+        </div>
+        <div className="flex items-center gap-1 rounded-full border border-border bg-card p-1">
+          {RANGE_OPTIONS.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setRange(opt.id)}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-xs font-medium uppercase tracking-widest transition-colors",
+                range === opt.id
+                  ? "bg-navy text-cream"
+                  : "text-navy/60 hover:text-navy"
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Primary stats */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={DollarSign}
-          label="Revenue (7d)"
-          value={formatPrice(stats.orders.revenue7d || 0, currency, language)}
+          label={`Collected revenue · ${stats.rangeLabel}`}
+          value={formatPrice(stats.orders.revenueSelected || 0, currency, language)}
+          hint={`lifetime ${formatPrice(stats.orders.revenueTotal || 0, currency, language)} · paid & not cancelled`}
           accent
         />
         <StatCard
           icon={ShoppingBag}
-          label="Orders (7d)"
-          value={String(stats.orders.total)}
+          label={`Orders · ${stats.rangeLabel}`}
+          value={String(stats.orders.ordersSelected)}
+          hint={`${formatPrice(stats.orders.placedSelected || 0, currency, language)} placed`}
         />
         <StatCard
           icon={Users}
           label="Customers"
           value={String(stats.users.total)}
-          hint={`+${stats.users.new7d} this week`}
+          hint={`+${stats.users.newSelected} in ${stats.rangeLabel.toLowerCase()}`}
         />
         <StatCard
           icon={Package}
@@ -130,14 +165,14 @@ export default function AdminDashboard() {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="font-serif text-xl text-navy">
-                Sales — last 14 days
+                Sales — last {stats.rangeDays} days
               </h2>
               <p className="mt-0.5 text-xs text-navy/55">
-                Daily revenue in {currency}
+                Daily collected revenue in {currency} (paid, not cancelled)
               </p>
             </div>
             <span className="rounded-full bg-gold/15 px-3 py-1 text-[10px] font-medium uppercase tracking-widest text-navy">
-              {formatPrice(stats.orders.revenue30d, currency, language)} / 30d
+              {formatPrice(stats.orders.revenueSelected, currency, language)} collected
             </span>
           </div>
           <ChartContainer
@@ -211,8 +246,12 @@ export default function AdminDashboard() {
               value={formatPrice(stats.aov, currency, language)}
             />
             <SummaryRow
-              label="Total revenue"
+              label="Collected revenue"
               value={formatPrice(stats.orders.revenueTotal, currency, language)}
+            />
+            <SummaryRow
+              label="Placed order value"
+              value={formatPrice(stats.orders.placedTotal, currency, language)}
             />
             <SummaryRow
               label="Total orders"

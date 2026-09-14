@@ -24,7 +24,6 @@ import { useStore } from "@/lib/store-provider";
 import { useLocale } from "@/lib/locale-provider";
 import { formatPrice, COUNTRIES } from "@/lib/locale";
 import type { Product, MetalFinish } from "@/lib/types";
-import { getProduct } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { ProductCard } from "@/components/product-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

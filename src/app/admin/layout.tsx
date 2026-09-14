@@ -9,7 +9,6 @@ import {
   ShoppingBag,
   Users,
   Star,
-  FileEdit,
   LogOut,
   ExternalLink,
   Settings,
@@ -25,7 +24,6 @@ const NAV = [
   { href: "/admin/reviews", label: "Reviews", icon: Star },
   { href: "/admin/promo-codes", label: "Promo Codes", icon: Ticket },
   { href: "/admin/users", label: "Customers", icon: Users },
-  { href: "/admin/content", label: "Homepage", icon: FileEdit },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
@@ -45,7 +43,8 @@ export default function AdminLayout({
       router.replace("/login");
       return;
     }
-    if (!user?.email.endsWith("@hime.jewellery")) {
+    // Server-enforced role; API routes independently re-check.
+    if ((user as { role?: string } | null)?.role !== "admin") {
       setAuthorized(false);
       return;
     }

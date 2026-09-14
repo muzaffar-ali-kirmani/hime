@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { createSession, hashPassword } from "@/lib/auth";
 import { apiError, apiSuccess, generateId, handleApiError } from "@/lib/api";
 import { eq } from "drizzle-orm";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const signupSchema = z.object({
   email: z.string().email().toLowerCase().trim(),
@@ -16,6 +17,12 @@ const signupSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Account-creation spam protection: 5 signups / hour per IP.
+    const rl = rateLimit(`signup:${clientIp(req)}`, 5, 60 * 60_000);
+    if (!rl.ok) {
+      return apiError(`Too many attempts. Try again in ${rl.retryAfter}s`, 429);
+    }
+
     const body = await req.json();
     const data = signupSchema.parse(body);
 

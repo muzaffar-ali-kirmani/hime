@@ -1,21 +1,25 @@
 export const runtime = "nodejs";
 import { db, schema } from "@/lib/db";
-import { apiSuccess, handleApiError } from "@/lib/api";
-import { getCurrentUser, AuthError } from "@/lib/auth";
+import { apiSuccess, apiError, handleApiError } from "@/lib/api";
+import { requireAdmin } from "@/lib/auth";
 import { sql, desc } from "drizzle-orm";
 
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) throw new AuthError("Authentication required", 401);
-  if (!user.email.endsWith("@hime.jewellery")) {
-    throw new AuthError("Admin access required", 403);
-  }
-  return user;
-}
+const RANGES = {
+  "7d": { days: 7, label: "Last 7 days", interval: "7 days" },
+  "30d": { days: 30, label: "Last 30 days", interval: "30 days" },
+  "90d": { days: 90, label: "Last 90 days", interval: "90 days" },
+} as const;
 
-export async function GET() {
+type RangeKey = keyof typeof RANGES;
+
+export async function GET(req: Request) {
   try {
     await requireAdmin();
+
+    const url = new URL(req.url);
+    const rangeParam = (url.searchParams.get("range") || "7d") as RangeKey;
+    const range: RangeKey = rangeParam in RANGES ? rangeParam : "7d";
+    const { days, label, interval } = RANGES[range];
 
     const now = new Date();
     // Date windows are computed by Postgres (now() - interval) — binding JS
@@ -24,22 +28,25 @@ export async function GET() {
     const [orderStats] = await db
       .select({
         total: sql<number>`count(*)`.as("total"),
+        ordersSelected: sql<number>`coalesce(sum(case when created_at >= now() - ${sql.raw(`interval '${interval}'`)} then 1 else 0 end), 0)`.as("ordersSelected"),
         pending: sql<number>`coalesce(sum(case when status = 'pending' then 1 else 0 end), 0)`.as("pending"),
         confirmed: sql<number>`coalesce(sum(case when status = 'confirmed' then 1 else 0 end), 0)`.as("confirmed"),
         inProduction: sql<number>`coalesce(sum(case when status = 'in_production' then 1 else 0 end), 0)`.as("inProduction"),
         shipped: sql<number>`coalesce(sum(case when status = 'shipped' then 1 else 0 end), 0)`.as("shipped"),
         delivered: sql<number>`coalesce(sum(case when status = 'delivered' then 1 else 0 end), 0)`.as("delivered"),
         cancelled: sql<number>`coalesce(sum(case when status = 'cancelled' then 1 else 0 end), 0)`.as("cancelled"),
-        revenue7d: sql<number>`coalesce(sum(case when created_at >= now() - interval '7 days' then total_usd else 0 end), 0)`.as("revenue7d"),
-        revenue30d: sql<number>`coalesce(sum(case when created_at >= now() - interval '30 days' then total_usd else 0 end), 0)`.as("revenue30d"),
-        revenueTotal: sql<number>`coalesce(sum(total_usd), 0)`.as("revenueTotal"),
+        // Real revenue = money actually collected: paid orders that aren't cancelled/refunded.
+        revenueSelected: sql<number>`coalesce(sum(case when created_at >= now() - ${sql.raw(`interval '${interval}'`)} and payment_status = 'paid' and status not in ('cancelled', 'returned') then total_usd else 0 end), 0)`.as("revenueSelected"),
+        placedSelected: sql<number>`coalesce(sum(case when created_at >= now() - ${sql.raw(`interval '${interval}'`)} then total_usd else 0 end), 0)`.as("placedSelected"),
+        revenueTotal: sql<number>`coalesce(sum(case when payment_status = 'paid' and status not in ('cancelled', 'returned') then total_usd else 0 end), 0)`.as("revenueTotal"),
+        placedTotal: sql<number>`coalesce(sum(total_usd), 0)`.as("placedTotal"),
       })
       .from(schema.orders);
 
     const [userStats] = await db
       .select({
         total: sql<number>`count(*)`.as("total"),
-        new7d: sql<number>`coalesce(sum(case when created_at >= now() - interval '7 days' then 1 else 0 end), 0)`.as("new7d"),
+        newSelected: sql<number>`coalesce(sum(case when created_at >= now() - ${sql.raw(`interval '${interval}'`)} then 1 else 0 end), 0)`.as("newSelected"),
       })
       .from(schema.users);
 
@@ -62,16 +69,16 @@ export async function GET() {
       .select({
         day: sql<string>`to_char(created_at, 'YYYY-MM-DD')`.as("day"),
         orders: sql<number>`count(*)`.as("orders"),
-        revenue: sql<number>`sum(total_usd)`.as("revenue"),
+        revenue: sql<number>`coalesce(sum(case when payment_status = 'paid' and status not in ('cancelled', 'returned') then total_usd else 0 end), 0)`.as("revenue"),
       })
       .from(schema.orders)
-      .where(sql`created_at >= now() - interval '14 days'`)
+      .where(sql`created_at >= now() - ${sql.raw(`interval '${interval}'`)}`)
       .groupBy(sql`to_char(created_at, 'YYYY-MM-DD')`)
       .orderBy(sql`day`);
 
-    // Fill gaps so the chart always shows a continuous 14-day series.
+    // Fill gaps so the chart always shows a continuous series for the range.
     const salesSeries: { day: string; orders: number; revenue: number }[] = [];
-    for (let i = 13; i >= 0; i--) {
+    for (let i = days - 1; i >= 0; i--) {
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
       const key = d.toISOString().slice(0, 10);
       const row = salesRows.find((r) => r.day === key);
@@ -84,7 +91,7 @@ export async function GET() {
 
     const [aovRow] = await db
       .select({
-        aov: sql<number>`case when count(*) = 0 then 0 else sum(total_usd) / count(*) end`.as("aov"),
+        aov: sql<number>`case when count(*) = 0 then 0 else sum(case when payment_status = 'paid' and status not in ('cancelled', 'returned') then total_usd else 0 end) / greatest(count(*) filter (where payment_status = 'paid' and status not in ('cancelled', 'returned')), 1) end`.as("aov"),
       })
       .from(schema.orders);
 
@@ -115,6 +122,9 @@ export async function GET() {
       topProducts,
       salesSeries,
       aov: Math.round((aovRow?.aov || 0) * 100) / 100,
+      range,
+      rangeLabel: label,
+      rangeDays: days,
     });
   } catch (err) {
     return handleApiError(err);

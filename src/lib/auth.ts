@@ -5,9 +5,17 @@ import { db, schema } from "./db";
 import { eq, and, gt } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
-const SECRET = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "hime-dev-secret-change-me-in-production-please-32chars"
-);
+// No insecure fallback: refuse to run without a real secret (prevents
+// session forgery with a publicly-known key).
+function getAuthSecret(): Uint8Array {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret || secret.length < 32) {
+    throw new Error(
+      "AUTH_SECRET is missing or too short. Set a 32+ char random value in the environment."
+    );
+  }
+  return new TextEncoder().encode(secret);
+}
 
 const SESSION_COOKIE = "hime_session";
 const SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
@@ -31,12 +39,12 @@ export async function signSessionToken(payload: SessionPayload) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("30d")
-    .sign(SECRET);
+    .sign(getAuthSecret());
 }
 
 export async function verifySessionToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, SECRET);
+    const { payload } = await jwtVerify(token, getAuthSecret());
     return payload as unknown as SessionPayload;
   } catch {
     return null;
@@ -118,6 +126,15 @@ export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) {
     throw new AuthError("Authentication required", 401);
+  }
+  return user;
+}
+
+/** Admin = users.role === 'admin' (server-enforced). */
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (user.role !== "admin") {
+    throw new AuthError("Admin access required", 403);
   }
   return user;
 }

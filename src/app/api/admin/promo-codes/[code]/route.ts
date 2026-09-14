@@ -2,17 +2,8 @@ export const runtime = "nodejs";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
-import { getCurrentUser, AuthError } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { eq } from "drizzle-orm";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) throw new AuthError("Authentication required", 401);
-  if (!user.email.endsWith("@hime.jewellery")) {
-    throw new AuthError("Admin access required", 403);
-  }
-  return user;
-}
 
 const patchSchema = z.object({
   isActive: z.boolean().optional(),

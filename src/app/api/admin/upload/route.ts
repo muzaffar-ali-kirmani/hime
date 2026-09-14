@@ -1,6 +1,6 @@
 export const runtime = "nodejs";
 import { NextRequest } from "next/server";
-import { getCurrentUser, AuthError } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
 import { createClient } from "@supabase/supabase-js";
 
@@ -14,15 +14,6 @@ const ALLOWED_MIME: Record<string, string> = {
 };
 
 const BUCKET = "product-images";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) throw new AuthError("Authentication required", 401);
-  if (!user.email.endsWith("@hime.jewellery")) {
-    throw new AuthError("Admin access required", 403);
-  }
-  return user;
-}
 
 function supabaseAdmin() {
   return createClient(

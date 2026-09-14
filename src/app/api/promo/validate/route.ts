@@ -3,6 +3,7 @@ import { z } from "zod";
 import { db, schema } from "@/lib/db";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
 import { eq, and, gte, gt } from "drizzle-orm";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const schema_ = z.object({
   code: z.string().min(1).max(40),
@@ -11,6 +12,12 @@ const schema_ = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Code-guessing protection: 20 checks / 5 min per IP.
+    const rl = rateLimit(`promo:${clientIp(req)}`, 20, 5 * 60_000);
+    if (!rl.ok) {
+      return apiError(`Too many attempts. Try again in ${rl.retryAfter}s`, 429);
+    }
+
     const body = await req.json();
     const data = schema_.parse(body);
 

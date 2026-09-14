@@ -1,18 +1,9 @@
 export const runtime = "nodejs";
 import { db, schema } from "@/lib/db";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
-import { getCurrentUser, AuthError } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { getStoreSettings } from "@/lib/db/store-settings";
-import { DEFAULT_SETTINGS, SETTINGS_KEYS, serializeSetting } from "@/lib/settings";
-
-async function requireAdmin() {
-  const user = await getCurrentUser();
-  if (!user) throw new AuthError("Authentication required", 401);
-  if (!user.email.endsWith("@hime.jewellery")) {
-    throw new AuthError("Admin access required", 403);
-  }
-  return user;
-}
+import { DEFAULT_SETTINGS, SETTINGS_KEYS, serializeSetting, MAX_ANNOUNCEMENTS } from "@/lib/settings";
 
 export async function GET() {
   try {
@@ -44,6 +35,12 @@ export async function PATCH(req: Request) {
           value = n;
         } else if (typeof DEFAULT_SETTINGS[key] === "boolean") {
           value = Boolean(value);
+        } else if (Array.isArray(DEFAULT_SETTINGS[key])) {
+          if (!Array.isArray(value)) return apiError(`${key} must be an array`, 400);
+          value = value
+            .map((v: unknown) => String(v ?? "").trim())
+            .filter(Boolean)
+            .slice(0, MAX_ANNOUNCEMENTS);
         } else {
           value = String(value ?? "");
         }

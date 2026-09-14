@@ -49,9 +49,6 @@ export const api = {
     return request<{ products: any[]; total: number }>(`/api/products${qs}`);
   },
 
-  getProduct: (slug: string) =>
-    request<{ product: any; reviews: any[] }>(`/api/products/${slug}`),
-
   getCategories: () =>
     request<{ categories: { category: string; count: number }[] }>("/api/categories"),
 

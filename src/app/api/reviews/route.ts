@@ -1,7 +1,7 @@
 export const runtime = "nodejs";
 import { z } from "zod";
 import { db, schema } from "@/lib/db";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, requireUser } from "@/lib/auth";
 import { apiError, apiSuccess, generateId, handleApiError } from "@/lib/api";
 import { eq, and, sql, desc } from "drizzle-orm";
 
@@ -24,10 +24,16 @@ export async function GET(req: Request) {
       return apiError("productId required", 400);
     }
 
+    // Only show approved reviews publicly.
     const reviews = await db
       .select()
       .from(schema.reviews)
-      .where(eq(schema.reviews.productId, productId))
+      .where(
+        and(
+          eq(schema.reviews.productId, productId),
+          eq(schema.reviews.isApproved, true)
+        )
+      )
       .orderBy(desc(schema.reviews.createdAt))
       .limit(limit)
       .offset(offset);
@@ -43,28 +49,65 @@ export async function POST(req: Request) {
     const body = await req.json();
     const data = reviewSchema.parse(body);
 
-    const user = await getCurrentUser();
+    // SECURITY: reviews require an account (prevents anonymous rating spam).
+    const user = await requireUser();
+
+    // One review per user per product.
+    const existing = await db
+      .select({ id: schema.reviews.id })
+      .from(schema.reviews)
+      .where(
+        and(
+          eq(schema.reviews.productId, data.productId),
+          eq(schema.reviews.userId, user.id)
+        )
+      )
+      .limit(1);
+    if (existing.length > 0) {
+      return apiError("You have already reviewed this product", 409);
+    }
+
+    // Basic per-user rate limit: max 5 reviews per hour.
+    const recent = await db
+      .select({ count: sql<number>`count(*)`.as("count") })
+      .from(schema.reviews)
+      .where(
+        and(
+          eq(schema.reviews.userId, user.id),
+          sql`${schema.reviews.createdAt} >= now() - interval '1 hour'`
+        )
+      );
+    if ((recent[0]?.count || 0) >= 5) {
+      return apiError("Too many reviews submitted — try again later", 429);
+    }
 
     const id = generateId("rev");
     await db.insert(schema.reviews).values({
       id,
       productId: data.productId,
-      userId: user?.id || null,
+      userId: user.id,
       authorName: data.authorName,
       rating: data.rating,
       title: data.title || null,
       body: data.body,
-      isVerified: !!user,
+      isVerified: true,
+      // Held for moderation before becoming public.
+      isApproved: false,
     });
 
-    // Update product rating
+    // Recalculate product rating from APPROVED reviews only.
     const stats = await db
       .select({
         avg: sql<number>`avg(${schema.reviews.rating})`.as("avg"),
         count: sql<number>`count(*)`.as("count"),
       })
       .from(schema.reviews)
-      .where(eq(schema.reviews.productId, data.productId));
+      .where(
+        and(
+          eq(schema.reviews.productId, data.productId),
+          eq(schema.reviews.isApproved, true)
+        )
+      );
 
     if (stats.length > 0) {
       await db

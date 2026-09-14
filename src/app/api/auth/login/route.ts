@@ -4,6 +4,7 @@ import { db, schema } from "@/lib/db";
 import { createSession, verifyPassword } from "@/lib/auth";
 import { apiError, apiSuccess, handleApiError } from "@/lib/api";
 import { eq } from "drizzle-orm";
+import { rateLimit, clientIp } from "@/lib/rate-limit";
 
 const loginSchema = z.object({
   email: z.string().email().toLowerCase().trim(),
@@ -12,6 +13,12 @@ const loginSchema = z.object({
 
 export async function POST(req: Request) {
   try {
+    // Brute-force protection: 10 attempts / 5 min per IP.
+    const rl = rateLimit(`login:${clientIp(req)}`, 10, 5 * 60_000);
+    if (!rl.ok) {
+      return apiError(`Too many attempts. Try again in ${rl.retryAfter}s`, 429);
+    }
+
     const body = await req.json();
     const data = loginSchema.parse(body);
 

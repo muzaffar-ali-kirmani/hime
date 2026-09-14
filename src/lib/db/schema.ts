@@ -19,6 +19,8 @@ export const users = pgTable("users", {
   lastName: text("last_name").notNull(),
   phone: text("phone"),
   country: text("country").default("AE"),
+  // "admin" grants dashboard access; anything else is a regular customer.
+  role: text("role").notNull().default("user"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .default(sql`now()`),
@@ -228,22 +230,6 @@ export const reviews = pgTable(
     productIdx: index("reviews_product_idx").on(t.productId),
   })
 );
-
-export const homepageSections = pgTable("homepage_sections", {
-  id: text("id").primaryKey(),
-  sectionKey: text("section_key").notNull().unique(),
-  title: text("title"),
-  subtitle: text("subtitle"),
-  body: text("body"),
-  imageUrl: text("image_url"),
-  ctaLabel: text("cta_label"),
-  ctaHref: text("cta_href"),
-  isActive: boolean("is_active").notNull().default(true),
-  sortOrder: integer("sort_order").notNull().default(0),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .default(sql`now()`),
-});
 
 export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
