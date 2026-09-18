@@ -68,7 +68,7 @@ export function ProductDetail({ product }: Props) {
     };
   }, [product.id]);
 
-  const firstAvailable = product.variants.find((v) => v.inStock) || product.variants[0];
+  const firstAvailable = product.variants[0];
   const [selectedVariant, setSelectedVariant] = useState(firstAvailable);
   const [engraving, setEngraving] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -258,9 +258,7 @@ export function ProductDetail({ product }: Props) {
                 <button
                   key={m}
                   onClick={() => {
-                    const v = product.variants.find(
-                      (vt) => vt.metal === m && vt.inStock
-                    );
+                    const v = product.variants.find((vt) => vt.metal === m);
                     if (v) setSelectedVariant(v);
                   }}
                   className={cn(
@@ -343,13 +341,11 @@ export function ProductDetail({ product }: Props) {
                       <button
                         key={s}
                         onClick={() => setSelectedVariant(variant)}
-                        disabled={!variant.inStock}
                         className={cn(
                           "min-w-[64px] rounded-full border px-4 py-2 text-sm transition-all",
                           selectedVariant.size === s
                             ? "border-navy bg-navy text-cream"
-                            : "border-border bg-card text-navy hover:border-navy",
-                          !variant.inStock && "opacity-40 line-through"
+                            : "border-border bg-card text-navy hover:border-navy"
                         )}
                       >
                         {s}
@@ -415,10 +411,9 @@ export function ProductDetail({ product }: Props) {
             </div>
             <Button
               onClick={handleAddToCart}
-              disabled={!selectedVariant.inStock}
               className="flex-1 rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
             >
-              {selectedVariant.inStock ? t("add.to.cart") : "Notify me when back"}
+              {t("add.to.cart")}
             </Button>
             <Button
               variant="outline"

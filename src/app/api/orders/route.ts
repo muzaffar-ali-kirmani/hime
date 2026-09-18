@@ -35,7 +35,8 @@ const checkoutSchema = z.object({
   shippingArea: z.string().optional(),
   shippingCountry: z.string().length(2),
   shippingNotes: z.string().optional(),
-  paymentMethod: z.enum(["card", "apple", "tabby", "tamara", "cod"]),
+  // COD is the only accepted payment method for now.
+  paymentMethod: z.literal("cod"),
   currency: z.string().default("AED"),
   promoCode: z.string().optional(),
   giftWrap: z.boolean().default(false),
@@ -62,6 +63,8 @@ export async function POST(req: Request) {
 
     // SECURITY: never trust client prices. Resolve every item's price from
     // the DB variant; custom items (customizer) are validated below.
+    // NOTE: no stock checks — this store sells made-to-order, so every
+    // variant is always purchasable regardless of stockCount.
     const variantIds = data.items
       .filter((i) => i.variantId && !i.variantId.startsWith("custom-"))
       .map((i) => i.variantId);
@@ -71,8 +74,6 @@ export async function POST(req: Request) {
             .select({
               id: schema.productVariants.id,
               price: schema.productVariants.price,
-              inStock: schema.productVariants.inStock,
-              stockCount: schema.productVariants.stockCount,
             })
             .from(schema.productVariants)
             .where(inArray(schema.productVariants.id, variantIds))
@@ -97,9 +98,6 @@ export async function POST(req: Request) {
           `Price mismatch for an item — please refresh your cart`,
           409
         );
-      }
-      if (!variant.inStock || variant.stockCount < item.quantity) {
-        return apiError(`An item in your cart is out of stock`, 409);
       }
     }
 
@@ -133,7 +131,11 @@ export async function POST(req: Request) {
         .where(eq(schema.promoCodes.code, data.promoCode.toUpperCase()))
         .limit(1);
 
-      if (promo.length > 0 && promo[0].isActive) {
+      if (
+        promo.length > 0 &&
+        promo[0].isActive &&
+        (!promo[0].expiresAt || promo[0].expiresAt >= new Date())
+      ) {
         const p = promo[0];
         if (subtotalUsd >= p.minOrderUsd) {
           promoDiscount = p.type === "percent"
@@ -160,8 +162,8 @@ export async function POST(req: Request) {
       userId: user?.id || null,
       guestEmail: user ? null : data.email,
       status: "pending",
-      paymentStatus: data.paymentMethod === "cod" ? "pending" : "pending",
-      paymentMethod: data.paymentMethod,
+      paymentStatus: "pending", // COD — collected by courier on delivery
+      paymentMethod: "cod",
       currency: data.currency,
       subtotalUsd,
       shippingUsd,
@@ -199,24 +201,7 @@ export async function POST(req: Request) {
         gemstone: item.gemstone || null,
         charmIds: item.charmIds || null,
       });
-
-      // Decrement stock
-      if (item.productId && !item.productId.startsWith("custom-")) {
-        const variant = await db
-          .select()
-          .from(schema.productVariants)
-          .where(eq(schema.productVariants.id, item.variantId))
-          .limit(1);
-        if (variant.length > 0) {
-          await db
-            .update(schema.productVariants)
-            .set({
-              stockCount: Math.max(0, variant[0].stockCount - item.quantity),
-              inStock: variant[0].stockCount - item.quantity > 0,
-            })
-            .where(eq(schema.productVariants.id, item.variantId));
-        }
-      }
+      // No stock decrement — made-to-order store, nothing to track down.
     }
 
     return apiSuccess(
