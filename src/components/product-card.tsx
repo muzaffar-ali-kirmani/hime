@@ -27,7 +27,7 @@ export function ProductCard({
 
   const handleQuickAdd = (e: React.MouseEvent) => {
     e.preventDefault();
-    const firstVariant = product.variants.find((v) => v.inStock);
+    const firstVariant = product.variants[0];
     if (!firstVariant) return;
     // Engraved products can't be quick-added — send the customer to the
     // product page where they must enter the engraving.

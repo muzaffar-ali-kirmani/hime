@@ -64,7 +64,7 @@ export function CartDrawer() {
         const json = await res.json();
         if (cancelled) return;
         const candidates: Product[] = (json.products || []).filter(
-          (p: Product) => !cartProductIds.has(p.id) && p.variants.some((v) => v.inStock)
+          (p: Product) => !cartProductIds.has(p.id) && p.variants.length > 0
         );
         if (candidates.length === 0) {
           setUpsellProduct(null);

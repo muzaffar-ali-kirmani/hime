@@ -476,8 +476,8 @@ export function CheckoutView() {
                   <dd className="text-navy">{formatPrice(total, currency, language)}</dd>
                 </div>
                 <p className="mt-2 text-[10px] text-navy/50">
-                  All payments secured by 3D-Secure. Currency:{" "}
-                  {CURRENCIES[currency].name}.
+                  Cash on delivery — pay the courier when your order arrives.
+                  Currency: {CURRENCIES[currency].name}.
                 </p>
               </dl>
             </div>
