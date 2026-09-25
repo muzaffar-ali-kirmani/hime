@@ -26,7 +26,9 @@ export const users = pgTable("users", {
     .default(sql`now()`),
 });
 
-export const sessions = pgTable("sessions", {
+// Named `app_sessions` to avoid colliding with Supabase Auth's built-in
+// `sessions` table (which lives in the same schema and references auth.users).
+export const sessions = pgTable("app_sessions", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
