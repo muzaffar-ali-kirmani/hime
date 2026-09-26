@@ -206,6 +206,16 @@ export function OrderView({ orderNumber }: { orderNumber: string }) {
                 <br />
                 {order.shippingPhone}
               </p>
+              {order.shippingLat != null && order.shippingLng != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${order.shippingLat},${order.shippingLng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs text-gold hover:underline"
+                >
+                  <MapPin className="size-3" /> View delivery pin on Google Maps
+                </a>
+              )}
             </div>
           </div>
         </aside>

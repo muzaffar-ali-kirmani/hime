@@ -35,6 +35,9 @@ const checkoutSchema = z.object({
   shippingArea: z.string().optional(),
   shippingCountry: z.string().length(2),
   shippingNotes: z.string().optional(),
+  // Optional delivery pin (lat/lng) picked on the checkout map.
+  shippingLat: z.number().min(-90).max(90).optional(),
+  shippingLng: z.number().min(-180).max(180).optional(),
   // COD is the only accepted payment method for now.
   paymentMethod: z.literal("cod"),
   currency: z.string().default("AED"),
@@ -182,6 +185,8 @@ export async function POST(req: Request) {
       shippingArea: data.shippingArea || null,
       shippingCountry: data.shippingCountry,
       shippingNotes: data.shippingNotes || null,
+      shippingLat: data.shippingLat ?? null,
+      shippingLng: data.shippingLng ?? null,
     });
 
     for (const item of data.items) {

@@ -29,7 +29,7 @@ const CATEGORIES = [
   "anklets",
 ];
 
-const METALS = ["gold", "rose-gold", "silver"];
+const METALS = ["gold", "rose-gold", "silver", "blue", "black"];
 const BADGES = ["new", "bestseller", "sale", "limited"];
 
 interface Product {

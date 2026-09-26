@@ -6,15 +6,36 @@ const swatchGradient = (metal: MetalFinish) => {
       return "linear-gradient(135deg, #E8D9B8 0%, #C9A66B 50%, #A88A4D 100%)";
     case "rose-gold":
       return "linear-gradient(135deg, #F4D4C4 0%, #E0B8A8 50%, #B8866F 100%)";
+    case "blue":
+      return "linear-gradient(135deg, #4A7BC8 0%, #2B5AA0 50%, #1B3A6B 100%)";
+    case "black":
+      return "linear-gradient(135deg, #4A4A4A 0%, #2A2A2A 50%, #111111 100%)";
     case "silver":
       return "linear-gradient(135deg, #F0F0F0 0%, #D5D5D5 50%, #A8A8A8 100%)";
+  }
+};
+
+// Hex fill colors for SVG placeholders (SVG needs colors, not CSS gradients).
+const svgMetalColors = (metal: MetalFinish): [string, string] => {
+  switch (metal) {
+    case "gold":
+      return ["%23E8D9B8", "%23A88A4D"];
+    case "rose-gold":
+      return ["%23F4D4C4", "%23B8866F"];
+    case "blue":
+      return ["%234A7BC8", "%231B3A6B"];
+    case "black":
+      return ["%234A4A4A", "%23111111"];
+    case "silver":
+      return ["%23F0F0F0", "%23A8A8A8"];
   }
 };
 
 // Use elegant SVG data URIs as placeholders for product images so the site renders without external assets.
 const svgImage = (label: string, metal: MetalFinish, kind: string) => {
   const gradient = swatchGradient(metal);
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 750'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23F7F3EB'/><stop offset='1' stop-color='%23EFE7D8'/></linearGradient><linearGradient id='m' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0"}'/><stop offset='1' stop-color='${metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8"}'/></linearGradient></defs><rect width='600' height='750' fill='url(%23g)'/><circle cx='300' cy='320' r='110' fill='url(%23m)' opacity='0.85'/><circle cx='300' cy='320' r='60' fill='%23F7F3EB'/><text x='300' y='450' font-family='Cormorant Garamond, serif' font-size='34' fill='%231D2A44' text-anchor='middle' font-style='italic'>${label}</text><text x='300' y='490' font-family='Inter, sans-serif' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.6'>${kind.toUpperCase()}</text></svg>`;
+  const [light, dark] = svgMetalColors(metal);
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 750'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='%23F7F3EB'/><stop offset='1' stop-color='%23EFE7D8'/></linearGradient><linearGradient id='m' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='${light}'/><stop offset='1' stop-color='${dark}'/></linearGradient></defs><rect width='600' height='750' fill='url(%23g)'/><circle cx='300' cy='320' r='110' fill='url(%23m)' opacity='0.85'/><circle cx='300' cy='320' r='60' fill='%23F7F3EB'/><text x='300' y='450' font-family='Cormorant Garamond, serif' font-size='34' fill='%231D2A44' text-anchor='middle' font-style='italic'>${label}</text><text x='300' y='490' font-family='Inter, sans-serif' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.6'>${kind.toUpperCase()}</text></svg>`;
   return `data:image/svg+xml;utf8,${svg.replace(/\n/g, "")}`;
 };
 

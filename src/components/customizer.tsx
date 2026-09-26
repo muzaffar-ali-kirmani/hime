@@ -39,6 +39,8 @@ const METALS: { id: MetalFinish; label: string; price: number; swatch: string }[
   { id: "gold", label: "18K Gold", price: 0, swatch: "linear-gradient(135deg, #E8D9B8, #A88A4D)" },
   { id: "rose-gold", label: "Rose Gold", price: 0, swatch: "linear-gradient(135deg, #F4D4C4, #B8866F)" },
   { id: "silver", label: "925 Silver", price: 0, swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
+  { id: "blue", label: "Blue", price: 0, swatch: "linear-gradient(135deg, #4A7BC8, #1B3A6B)" },
+  { id: "black", label: "Black", price: 0, swatch: "linear-gradient(135deg, #4A4A4A, #111111)" },
 ];
 
 const LENGTHS = [40, 45, 50, 55];
@@ -172,7 +174,7 @@ export function Customizer() {
           <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-cream via-sand to-blush p-8 sm:p-12">
             <div className="relative mx-auto aspect-square max-w-md overflow-hidden rounded-2xl bg-cream shadow-[0_30px_60px_-20px_rgba(29,42,68,0.18)]">
               <Image
-                src={`data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0"}'/%3E%3Cstop offset='1' stop-color='${metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8"}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='600' fill='%23F7F3EB'/%3E%3Ccircle cx='300' cy='260' r='80' fill='url(%23m)'/%3E%3Crect x='280' y='260' width='40' height='200' fill='url(%23m)' rx='4'/%3E%3Ccircle cx='300' cy='460' r='15' fill='url(%23m)'/%3E%3Ctext x='300' y='520' font-family='Cormorant Garamond' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.5'%3EHIME%3C/text%3E%3C/svg%3E`}
+                src={`data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 600'%3E%3Cdefs%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : metal === "blue" ? "%234A7BC8" : metal === "black" ? "%234A4A4A" : "%23F0F0F0"}'/%3E%3Cstop offset='1' stop-color='${metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : metal === "blue" ? "%231B3A6B" : metal === "black" ? "%23111111" : "%23A8A8A8"}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='600' fill='%23F7F3EB'/%3E%3Ccircle cx='300' cy='260' r='80' fill='url(%23m)'/%3E%3Crect x='280' y='260' width='40' height='200' fill='url(%23m)' rx='4'/%3E%3Ccircle cx='300' cy='460' r='15' fill='url(%23m)'/%3E%3Ctext x='300' y='520' font-family='Cormorant Garamond' font-size='14' fill='%231D2A44' text-anchor='middle' letter-spacing='4' opacity='0.5'%3EHIME%3C/text%3E%3C/svg%3E`}
                 alt="Live preview"
                 fill
                 unoptimized

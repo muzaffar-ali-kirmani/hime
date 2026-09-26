@@ -279,6 +279,10 @@ export function ProductDetail({ product }: Props) {
                           ? "linear-gradient(135deg, #E8D9B8, #A88A4D)"
                           : m === "rose-gold"
                           ? "linear-gradient(135deg, #F4D4C4, #B8866F)"
+                          : m === "blue"
+                          ? "linear-gradient(135deg, #4A7BC8, #1B3A6B)"
+                          : m === "black"
+                          ? "linear-gradient(135deg, #4A4A4A, #111111)"
                           : "linear-gradient(135deg, #F0F0F0, #A8A8A8)",
                     }}
                   />

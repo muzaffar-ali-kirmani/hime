@@ -14,6 +14,9 @@ const addressSchema = z.object({
   city: z.string().min(1),
   area: z.string().optional(),
   country: z.string().length(2),
+  // Optional map pin for the saved address.
+  lat: z.number().min(-90).max(90).optional(),
+  lng: z.number().min(-180).max(180).optional(),
   isDefault: z.boolean().default(false),
 });
 
@@ -52,6 +55,8 @@ export async function POST(req: Request) {
       ...data,
       address2: data.address2 || null,
       area: data.area || null,
+      lat: data.lat ?? null,
+      lng: data.lng ?? null,
     });
 
     return apiSuccess({ id }, 201);

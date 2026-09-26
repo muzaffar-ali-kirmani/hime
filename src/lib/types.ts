@@ -2,7 +2,7 @@ export type Currency = "AED" | "SAR" | "QAR" | "KWD" | "BHD" | "OMR" | "USD";
 export type Language = "en" | "ar";
 export type Country = "AE" | "SA" | "QA" | "KW" | "BH" | "OM";
 
-export type MetalFinish = "gold" | "rose-gold" | "silver";
+export type MetalFinish = "gold" | "rose-gold" | "silver" | "blue" | "black";
 export type ProductCategory =
   | "necklaces"
   | "bracelets"

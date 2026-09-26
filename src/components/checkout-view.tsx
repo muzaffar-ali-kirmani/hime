@@ -14,6 +14,7 @@ import { formatPrice, COUNTRIES, CURRENCIES } from "@/lib/locale";
 import { ShopLayout } from "@/components/shop-layout";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api-client";
+import { MapPicker, type LatLng, googleMapsLink } from "@/components/map-picker";
 import { toast } from "sonner";
 
 // Hidden for now — re-enable to restore card / Apple Pay / Tabby / Tamara
@@ -47,6 +48,7 @@ export function CheckoutView() {
     notes: "",
     saveInfo: true,
   });
+  const [pin, setPin] = useState<LatLng | null>(null);
 
   const discountedSubtotal = cartSubtotal - cartBulkDiscount;
   const shipping =
@@ -89,6 +91,8 @@ export function CheckoutView() {
         shippingArea: form.area || undefined,
         shippingCountry: country,
         shippingNotes: form.notes || undefined,
+        shippingLat: pin?.lat,
+        shippingLng: pin?.lng,
         paymentMethod: payment,
         currency,
       });
@@ -263,17 +267,12 @@ export function CheckoutView() {
                   </div>
                   <div>
                     <Label className="text-xs uppercase tracking-widest">City</Label>
-                    <select
+                    <Input
                       value={form.city}
                       onChange={(e) => setForm({ ...form, city: e.target.value })}
-                      className="mt-2 h-11 w-full rounded-lg border border-border bg-card px-3 text-sm"
-                    >
-                      {COUNTRIES[country].cities.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="e.g. Dubai"
+                      className="mt-2 h-11 rounded-lg"
+                    />
                   </div>
                 </div>
 
@@ -306,8 +305,20 @@ export function CheckoutView() {
                   />
                 </div>
 
+                <MapPicker country={country} value={pin} onChange={setPin} />
+
                 <Button
-                  onClick={() => setStep("payment")}
+                  onClick={() => {
+                    // Delivery pin is mandatory — couriers in the Gulf rely on
+                    // exact locations far more than street addresses.
+                    if (!pin) {
+                      toast.error(
+                        "Please add a delivery pin — tap the map or use \"Use my location\"."
+                      );
+                      return;
+                    }
+                    setStep("payment");
+                  }}
                   className="w-full rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
                 >
                   Continue to payment
@@ -394,6 +405,19 @@ export function CheckoutView() {
                     {form.city}, {COUNTRIES[country].name}
                     <br />
                     {form.phone}
+                    {pin && (
+                      <>
+                        <br />
+                        <a
+                          href={googleMapsLink(pin)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-gold hover:underline"
+                        >
+                          📍 View delivery pin on Google Maps
+                        </a>
+                      </>
+                    )}
                   </p>
                 </div>
                 <div className="space-y-2 text-sm">

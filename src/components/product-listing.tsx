@@ -247,6 +247,8 @@ function FilterPanel({
     { id: "gold", label: "Gold", swatch: "linear-gradient(135deg, #E8D9B8, #C9A66B)" },
     { id: "rose-gold", label: "Rose Gold", swatch: "linear-gradient(135deg, #F4D4C4, #B8866F)" },
     { id: "silver", label: "Silver", swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
+    { id: "blue", label: "Blue", swatch: "linear-gradient(135deg, #4A7BC8, #1B3A6B)" },
+    { id: "black", label: "Black", swatch: "linear-gradient(135deg, #4A4A4A, #111111)" },
   ];
 
   return (

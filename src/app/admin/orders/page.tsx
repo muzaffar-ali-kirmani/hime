@@ -393,6 +393,16 @@ function OrderDetailDrawer({
                   Note: {order.shippingNotes}
                 </p>
               )}
+              {order.shippingLat != null && order.shippingLng != null && (
+                <a
+                  href={`https://www.google.com/maps?q=${order.shippingLat},${order.shippingLng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-gold hover:underline"
+                >
+                  <MapPin className="size-3.5" /> Open delivery pin in Google Maps
+                </a>
+              )}
             </div>
           </div>
 

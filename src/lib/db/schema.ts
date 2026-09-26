@@ -129,6 +129,10 @@ export const orders = pgTable(
     shippingArea: text("shipping_area"),
     shippingCountry: text("shipping_country").notNull(),
     shippingNotes: text("shipping_notes"),
+    // Optional delivery pin (lat/lng) captured at checkout so couriers can
+    // locate the exact address.
+    shippingLat: real("shipping_lat"),
+    shippingLng: real("shipping_lng"),
     trackingNumber: text("tracking_number"),
     adminNotes: text("admin_notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
@@ -256,6 +260,9 @@ export const addresses = pgTable(
     city: text("city").notNull(),
     area: text("area"),
     country: text("country").notNull(),
+    // Optional map pin for saved addresses.
+    lat: real("lat"),
+    lng: real("lng"),
     isDefault: boolean("is_default").notNull().default(false),
   },
   (t) => ({
