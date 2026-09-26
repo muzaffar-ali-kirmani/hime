@@ -16,7 +16,9 @@ const nextConfig: NextConfig = {
           { key: "X-DNS-Prefetch-Control", value: "on" },
           {
             key: "Permissions-Policy",
-            value: "camera=(), microphone=(), geolocation=(), payment=()",
+            // geolocation=(self): the checkout map needs the browser's real
+            // "Allow location?" prompt for this site's own origin.
+            value: "camera=(), microphone=(), geolocation=(self), payment=()",
           },
           {
             key: "Strict-Transport-Security",

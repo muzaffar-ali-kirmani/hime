@@ -43,11 +43,12 @@ function ClickHandler({ onPick }: { onPick: (p: LatLng) => void }) {
   return null;
 }
 
-function Recenter({ center }: { center: LatLng }) {
+function Recenter({ center, zoom }: { center: LatLng; zoom: number }) {
   const map = useMap();
   useEffect(() => {
-    map.setView(center, map.getZoom() || 14);
-  }, [center, map]);
+    // Animated fly-in so the customer can visually verify the pin location.
+    map.flyTo(center, zoom, { duration: 0.8 });
+  }, [center, zoom, map]);
   return null;
 }
 
@@ -134,11 +135,6 @@ export function MapPicker({
             <Crosshair className="me-1.5 size-3.5" />
             {locating ? "Locating…" : "Use my location"}
           </Button>
-          {value && (
-            <span className="text-[10px] text-success">
-              ✓ Pin placed
-            </span>
-          )}
         </div>
       </div>
 
@@ -158,7 +154,8 @@ export function MapPicker({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <ClickHandler onPick={onChange} />
-            <Recenter center={center} />
+            {/* Street-level zoom once a pin exists; country view otherwise. */}
+            <Recenter center={center} zoom={value ? 16 : 11} />
             {value && <Marker position={value} icon={pinIcon} draggable eventHandlers={{ dragend: (e) => {
               const p = e.target as L.Marker;
               const ll = p.getLatLng();
