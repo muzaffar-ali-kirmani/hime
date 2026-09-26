@@ -14,8 +14,18 @@ import { formatPrice, COUNTRIES, CURRENCIES } from "@/lib/locale";
 import { ShopLayout } from "@/components/shop-layout";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api-client";
-import { MapPicker, type LatLng, googleMapsLink } from "@/components/map-picker";
+import dynamic from "next/dynamic";
+import type { LatLng } from "@/components/map-picker";
 import { toast } from "sonner";
+
+// Leaflet touches `window` at import time — load the map client-side only so
+// the /checkout page can be prerendered at build time.
+const MapPicker = dynamic(
+  () => import("@/components/map-picker").then((m) => m.MapPicker),
+  { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-secondary/40" /> }
+);
+
+const googleMapsLink = (p: LatLng) => `https://www.google.com/maps?q=${p.lat},${p.lng}`;
 
 // Hidden for now — re-enable to restore card / Apple Pay / Tabby / Tamara
 // { id: "card", label: "Credit / Debit Card", icon: CreditCard },
