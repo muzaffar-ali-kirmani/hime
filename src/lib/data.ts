@@ -94,7 +94,7 @@ export const TESTIMONIALS = [
 
 export const TRUST_BADGES = [
   { title: "Hand-finished", description: "Each piece set and polished by hand in our atelier." },
-  { title: "18K & 925 Hallmarked", description: "Authentic, certified metals — purity you can trust." },
+  { title: "Gold Plated", description: "Premium plated finish — shine you can trust." },
   { title: "Hypoallergenic", description: "Nickel-free, kind to sensitive skin." },
   { title: "Free Gulf Shipping", description: "Complimentary delivery across all six GCC countries." },
   { title: "Made-to-order", description: "Handcrafted in 5–7 days, just for her." },

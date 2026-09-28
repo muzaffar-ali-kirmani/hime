@@ -63,7 +63,7 @@ const FAQ_GROUPS = [
     items: [
       {
         q: "Is your gold real?",
-        a: "Yes. Our 18K pieces are solid 18K gold. Our gold vermeil pieces are 925 sterling silver coated with 2.5 microns of 18K gold — five times thicker than standard plating.",
+        a: "Yes — all our pieces are premium gold plated jewellery, finished with a thick, durable plating that is five times thicker than standard plating for long-lasting shine.",
       },
       {
         q: "Are your pieces hypoallergenic?",

@@ -21,7 +21,7 @@ const cormorant = Cormorant_Garamond({
 export const metadata: Metadata = {
   title: "Hime — Just Made For You | Premium Personalised Jewellery",
   description:
-    "Handcrafted personalised jewellery made for her story. Necklaces, bracelets, rings and earrings in 18K gold and 925 sterling silver. Ships across the Gulf.",
+    "Handcrafted personalised jewellery made for her story. Necklaces, bracelets, rings and earrings in gold plated jewellery. Ships across the Gulf.",
   keywords: [
     "personalised jewellery",
     "custom necklace",
@@ -31,12 +31,12 @@ export const metadata: Metadata = {
     "UAE jewellery",
     "Saudi Arabia jewellery",
     "Doha jewellery",
-    "18K gold jewellery",
+    "gold plated jewellery",
   ],
   openGraph: {
     title: "Hime — Just Made For You",
     description:
-      "Premium personalised jewellery for the women who matter. Handcrafted in 18K gold and sterling silver.",
+      "Premium personalised jewellery for the women who matter. Handcrafted gold plated jewellery.",
     type: "website",
   },
 };

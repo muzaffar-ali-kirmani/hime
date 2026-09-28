@@ -62,7 +62,7 @@ const translations: Record<string, { en: string; ar: string }> = {
   "email.placeholder": { en: "Your email address", ar: "عنوان بريدكِ الإلكتروني" },
   "subscribe": { en: "Subscribe", ar: "اشتركي" },
   "trust.handcrafted": { en: "Hand-finished in our atelier", ar: "مصنوعة يدويًا في مشغلنا" },
-  "trust.metal": { en: "Hallmarked 18K & 925", ar: "معتمدة 18 قيراط و925" },
+  "trust.metal": { en: "Premium Gold Plated", ar: "طلاء ذهبي فاخر" },
   "trust.delivery": { en: "Free Gulf-wide delivery", ar: "شحن مجاني لكافة دول الخليج" },
 };
 

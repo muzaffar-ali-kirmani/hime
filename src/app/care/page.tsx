@@ -52,20 +52,20 @@ export default function CarePage() {
         <div className="mx-auto mt-14 max-w-3xl space-y-6 text-sm leading-relaxed text-navy/80">
           <h2 className="font-serif text-3xl text-navy">By material</h2>
 
-          <Section title="18K Gold & Gold Vermeil">
+          <Section title="Gold Plated Jewellery">
             <p>
-              Our solid 18K pieces need very little care — just a soft cloth
-              and warm water. For gold vermeil (sterling silver coated with
-              18K gold), avoid abrasive polishes which can wear the plating
-              over time.
+              Our gold plated pieces need gentle care — just a soft cloth
+              and warm water. Avoid abrasive polishes which can wear the
+              plating over time, and keep pieces dry to preserve their
+              golden shine.
             </p>
           </Section>
 
-          <Section title="925 Sterling Silver">
+          <Section title="Silver Plated Jewellery">
             <p>
-              Silver naturally tarnishes when exposed to air. Polish gently
-              with the included cloth. For deeper tarnish, use a mild
-              silver-cleaning solution and rinse thoroughly.
+              Silver plated pieces naturally dull when exposed to air.
+              Polish gently with the included cloth and store in the pouch
+              provided to keep them bright.
             </p>
           </Section>
 

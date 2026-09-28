@@ -27,8 +27,8 @@ export default function AboutPage() {
               engraved pendants for the women who matter most in our lives.
             </p>
             <p className="mt-3 text-base leading-relaxed text-navy/75">
-              Today, every Hime piece is set and polished by hand in 18K
-              gold or 925 sterling silver. We don't make fast jewellery —
+              Today, every Hime piece is set and polished by hand as
+              premium gold plated jewellery. We don't make fast jewellery —
               we make the kind you reach for every day. The kind you pass
               down.
             </p>

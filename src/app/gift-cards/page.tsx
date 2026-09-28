@@ -35,7 +35,7 @@ export default function GiftCardsPage() {
               ))}
             </div>
             <Button className="mt-6 rounded-full bg-navy px-8 py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90">
-              <Gift className="me-2 size-4" /> Buy gift card
+              <Gift className="me-2 size-4" /> Coming soon
             </Button>
           </div>
 

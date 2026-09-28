@@ -491,7 +491,7 @@ function ProductEditDrawer({
                 <Input
                   value={Array.isArray(data.tags) ? data.tags.join(", ") : data.tags}
                   onChange={(e) => setData({ ...data, tags: e.target.value })}
-                  placeholder="initial, 18K, engravable"
+                  placeholder="initial, gold plated, engravable"
                 />
               </Field>
             </div>

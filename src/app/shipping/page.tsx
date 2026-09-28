@@ -29,8 +29,8 @@ export default function ShippingPage() {
             },
             {
               icon: Clock,
-              title: "3–5 day delivery",
-              text: "In-stock pieces arrive within 3–5 business days. Made-to-order in 5–7 days.",
+              title: "10–12 day delivery",
+              text: "In-stock pieces arrive within 10–12 days across all GCC countries. Made-to-order in 5–7 days, then shipped.",
             },
             {
               icon: Globe,
@@ -56,18 +56,17 @@ export default function ShippingPage() {
                 <thead className="bg-secondary/50">
                   <tr className="text-left text-[11px] uppercase tracking-widest text-navy/60">
                     <th className="px-4 py-3">Country</th>
-                    <th className="px-4 py-3">Standard</th>
-                    <th className="px-4 py-3">Express</th>
+                    <th className="px-4 py-3">Delivery time</th>
                   </tr>
                 </thead>
                 <tbody>
                   {[
-                    ["UAE", "1–2 days", "Same day"],
-                    ["Saudi Arabia", "3–5 days", "1–2 days"],
-                    ["Qatar", "3–5 days", "1–2 days"],
-                    ["Kuwait", "3–5 days", "2 days"],
-                    ["Bahrain", "3–5 days", "1–2 days"],
-                    ["Oman", "3–5 days", "2 days"],
+                    ["UAE", "10–12 days"],
+                    ["Saudi Arabia", "10–12 days"],
+                    ["Qatar", "10–12 days"],
+                    ["Kuwait", "10–12 days"],
+                    ["Bahrain", "10–12 days"],
+                    ["Oman", "10–12 days"],
                   ].map((row) => (
                     <tr key={row[0]} className="border-t border-border">
                       {row.map((c, i) => (

@@ -12,288 +12,332 @@ try {
 
 import { db, schema } from "./index";
 import { products, productVariants, promoCodes } from "./schema";
+import { inArray } from "drizzle-orm";
 
-const svgFor = (label: string, metal: string) => {
-  const g = metal === "gold" ? "%23E8D9B8" : metal === "rose-gold" ? "%23F4D4C4" : "%23F0F0F0";
-  const d = metal === "gold" ? "%23A88A4D" : metal === "rose-gold" ? "%23B8866F" : "%23A8A8A8";
-  return `data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 750'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23F7F3EB'/%3E%3Cstop offset='1' stop-color='%23EFE7D8'/%3E%3C/linearGradient%3E%3ClinearGradient id='m' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='${g}'/%3E%3Cstop offset='1' stop-color='${d}'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='600' height='750' fill='url(%23g)'/%3E%3Ccircle cx='300' cy='320' r='110' fill='url(%23m)' opacity='0.85'/%3E%3Ccircle cx='300' cy='320' r='60' fill='%23F7F3EB'/%3E%3Ctext x='300' y='450' font-family='Cormorant Garamond' font-size='34' fill='%231D2A44' text-anchor='middle' font-style='italic'%3E${label}%3C/text%3E%3C/svg%3E`;
-};
+// IMPORTANT: only ever delete these explicit IDs (the old demo entries plus
+// the real products managed by this seed). Never blanket-delete the table —
+// that would destroy live catalogue data again.
+const SEED_PRODUCT_IDS = [
+  "p-001", "p-002", "p-003", "p-004", "p-005", "p-006",
+  "p-007", "p-008", "p-009", "p-010", "p-011", "p-012",
+  "real-001", "real-002", "real-003", "real-004", "real-005",
+  "real-006", "real-007", "real-008", "real-009", "real-010", "real-011",
+];
 
+// Real products recovered from order history (2026-09). Prices and variants
+// reflect what was actually sold. Descriptions follow the gold plated
+// positioning — no solid-gold or silver-purity claims anywhere.
 const PRODUCTS_SEED = [
   {
-    id: "p-001",
-    slug: "celeste-initial-pendant",
-    name: "Celeste Initial Pendant",
-    nameAr: "قلادة سيليست بالحرف الأول",
+    id: "real-001",
+    slug: "qalb",
+    name: "Qalb",
+    nameAr: "قلب",
     description:
-      "A whisper of gold, a letter that means everything. The Celeste Initial Pendant is hand-finished in 18K gold vermeil with a delicate chain you can layer or wear alone.",
-    category: "necklaces",
-    basePrice: 189,
-    badge: "bestseller",
-    rating: 4.9,
-    reviewCount: 312,
-    materials: ["18K Gold Vermeil", "Sterling Silver Core"],
-    careInstructions:
-      "Avoid contact with perfumes and lotions. Store in the pouch provided.",
-    isHypoallergenic: true,
-    tags: ["initial", "engravable", "18K", "layering"],
-    occasion: ["Birthday", "Anniversary", "Just Because"],
-    personalization: {
-      engraving: { maxLength: 1, placeholder: "A" },
-      length: { options: [40, 45, 50], default: 45 },
-    },
-    variants: [
-      { id: "gold-40", metal: "gold", lengthCm: 40, price: 189, inStock: true, stockCount: 8 },
-      { id: "gold-45", metal: "gold", lengthCm: 45, price: 189, inStock: true, stockCount: 12 },
-      { id: "gold-50", metal: "gold", lengthCm: 50, price: 189, inStock: true, stockCount: 6 },
-      { id: "rose-gold-40", metal: "rose-gold", lengthCm: 40, price: 204, inStock: true, stockCount: 4 },
-      { id: "rose-gold-45", metal: "rose-gold", lengthCm: 45, price: 204, inStock: true, stockCount: 5 },
-      { id: "rose-gold-50", metal: "rose-gold", lengthCm: 50, price: 204, inStock: true, stockCount: 3 },
-      { id: "silver-40", metal: "silver", lengthCm: 40, price: 164, inStock: true, stockCount: 7 },
-      { id: "silver-45", metal: "silver", lengthCm: 45, price: 164, inStock: true, stockCount: 9 },
-      { id: "silver-50", metal: "silver", lengthCm: 50, price: 164, inStock: true, stockCount: 4 },
-    ],
-  },
-  {
-    id: "p-002",
-    slug: "noor-birthstone-necklace",
-    name: "Noor Birthstone Necklace",
-    nameAr: "قلادة نور بحجر الميلاد",
-    description:
-      "Catch the light of her birth month. The Noor Necklace pairs a hand-set gemstone with a fine cable chain, finished in 18K gold for a piece she will reach for daily.",
-    category: "necklaces",
-    basePrice: 229,
-    badge: "new",
-    rating: 4.8,
-    reviewCount: 184,
-    materials: ["18K Gold", "Natural Gemstone"],
-    careInstructions:
-      "Remove before showering. Wipe gently with the included polishing cloth.",
-    isHypoallergenic: true,
-    isHalalFriendly: true,
-    tags: ["birthstone", "engravable", "18K"],
-    occasion: ["Birthday", "Mother's Day"],
-    personalization: {
-      engraving: { maxLength: 12, placeholder: "Engrave a name" },
-      length: { options: [40, 45, 50], default: 45 },
-    },
-    variants: [
-      { id: "gold-40", metal: "gold", lengthCm: 40, price: 229, inStock: true, stockCount: 6 },
-      { id: "gold-45", metal: "gold", lengthCm: 45, price: 229, inStock: true, stockCount: 8 },
-      { id: "gold-50", metal: "gold", lengthCm: 50, price: 229, inStock: true, stockCount: 4 },
-      { id: "rose-gold-45", metal: "rose-gold", lengthCm: 45, price: 244, inStock: true, stockCount: 3 },
-      { id: "silver-45", metal: "silver", lengthCm: 45, price: 204, inStock: true, stockCount: 5 },
-    ],
-  },
-  {
-    id: "p-003",
-    slug: "lumi-name-chain",
-    name: "Lumi Name Chain",
-    nameAr: "سلسلة لومي بالاسم",
-    description:
-      "Her name, hand-set in 925 sterling silver. Choose a script or block letter style — made to order, just for her.",
-    category: "necklaces",
-    basePrice: 159,
-    rating: 4.9,
-    reviewCount: 421,
-    materials: ["925 Sterling Silver"],
-    careInstructions: "Polish with a soft cloth. Avoid water and harsh chemicals.",
-    isHypoallergenic: true,
-    tags: ["name", "engravable", "silver"],
-    occasion: ["Anniversary", "Just Because"],
-    personalization: {
-      engraving: { maxLength: 10, placeholder: "Her name" },
-      length: { options: [40, 45, 50, 55], default: 45 },
-    },
-    variants: [
-      { id: "silver-40", metal: "silver", lengthCm: 40, price: 159, inStock: true, stockCount: 6 },
-      { id: "silver-45", metal: "silver", lengthCm: 45, price: 159, inStock: true, stockCount: 12 },
-      { id: "silver-50", metal: "silver", lengthCm: 50, price: 159, inStock: true, stockCount: 8 },
-      { id: "silver-55", metal: "silver", lengthCm: 55, price: 159, inStock: false, madeToOrder: true, productionDays: "7-10 days" },
-    ],
-  },
-  {
-    id: "p-005",
-    slug: "safa-signet-ring",
-    name: "Safa Signet Ring",
-    nameAr: "خاتم صفا سيغنت",
-    description:
-      "An heirloom in the making. The Safa Signet is engraved with her initial and finished in 18K gold — a piece to pass down.",
-    category: "rings",
-    basePrice: 269,
-    badge: "limited",
-    rating: 5.0,
-    reviewCount: 92,
-    materials: ["18K Gold", "Solid Sterling Silver"],
-    careInstructions: "Remove before sleep and exercise.",
-    isHalalFriendly: true,
-    isHypoallergenic: true,
-    tags: ["signet", "engravable", "18K", "heirloom"],
-    occasion: ["Engagement", "Anniversary", "Birthday"],
-    personalization: {
-      engraving: { maxLength: 2, placeholder: "AB" },
-    },
-    variants: [
-      { id: "gold-6", metal: "gold", size: "6", price: 269, inStock: true, stockCount: 3 },
-      { id: "gold-7", metal: "gold", size: "7", price: 269, inStock: true, stockCount: 5 },
-      { id: "gold-8", metal: "gold", size: "8", price: 269, inStock: true, stockCount: 2 },
-      { id: "silver-6", metal: "silver", size: "6", price: 219, inStock: true, stockCount: 4 },
-      { id: "silver-7", metal: "silver", size: "7", price: 219, inStock: true, stockCount: 6 },
-      { id: "silver-8", metal: "silver", size: "8", price: 219, inStock: false, madeToOrder: true, productionDays: "10-14 days" },
-    ],
-  },
-  {
-    id: "p-006",
-    slug: "amara-hoops",
-    name: "Amara Pearl Hoops",
-    nameAr: "أقراط أمارا باللؤلؤ",
-    description:
-      "Freshwater pearls cradled in 18K gold. The Amara Hoops catch the light from every angle — refined, modern, made for her.",
-    category: "earrings",
-    basePrice: 199,
-    badge: "new",
-    rating: 4.9,
-    reviewCount: 138,
-    materials: ["18K Gold", "Freshwater Pearl"],
-    careInstructions: "Keep away from moisture. Wipe with a soft cloth after wear.",
-    isHypoallergenic: true,
-    tags: ["pearl", "18K", "hoops"],
-    occasion: ["Wedding", "Anniversary", "Just Because"],
-    variants: [
-      { id: "gold", metal: "gold", price: 199, inStock: true, stockCount: 7 },
-      { id: "rose-gold", metal: "rose-gold", price: 214, inStock: true, stockCount: 3 },
-      { id: "silver", metal: "silver", price: 174, inStock: true, stockCount: 5 },
-    ],
-  },
-  {
-    id: "p-007",
-    slug: "yasmin-anklet",
-    name: "Yasmin Initial Anklet",
-    nameAr: "خلخال ياسمين بالحرف الأول",
-    description:
-      "A tiny initial resting at her ankle. Lightweight, tarnish-resistant, and finished by hand in 18K gold.",
-    category: "anklets",
-    basePrice: 109,
-    rating: 4.7,
-    reviewCount: 76,
-    materials: ["18K Gold Vermeil"],
-    careInstructions: "Avoid contact with water and lotions.",
-    isHypoallergenic: true,
-    tags: ["initial", "anklet", "18K"],
-    occasion: ["Birthday", "Just Because"],
-    personalization: {
-      engraving: { maxLength: 1, placeholder: "A" },
-      length: { options: [22, 24, 26], default: 24 },
-    },
-    variants: [
-      { id: "gold-22", metal: "gold", lengthCm: 22, price: 109, inStock: true, stockCount: 5 },
-      { id: "gold-24", metal: "gold", lengthCm: 24, price: 109, inStock: true, stockCount: 8 },
-      { id: "gold-26", metal: "gold", lengthCm: 26, price: 109, inStock: true, stockCount: 4 },
-      { id: "rose-gold-24", metal: "rose-gold", lengthCm: 24, price: 124, inStock: true, stockCount: 3 },
-      { id: "silver-24", metal: "silver", lengthCm: 24, price: 84, inStock: true, stockCount: 6 },
-    ],
-  },
-  {
-    id: "p-008",
-    slug: "reem-tennis-bracelet",
-    name: "Reem Tennis Bracelet",
-    nameAr: "سوار ريم تنس",
-    description:
-      "A line of light, hand-set in 925 sterling silver. The Reem Tennis Bracelet is the everyday piece that makes any outfit feel finished.",
+      "Qalb — a heart charm piece made to be kept close. Hand-finished premium gold plated jewellery, personalised with the engraving of your choice.",
     category: "bracelets",
-    basePrice: 249,
-    rating: 4.8,
-    reviewCount: 89,
-    materials: ["925 Sterling Silver", "Cubic Zirconia"],
-    careInstructions: "Remove before showering and sleeping.",
+    basePrice: 99,
+    badge: null as string | null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1788639976759-b1jmk8.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
     isHypoallergenic: true,
-    tags: ["tennis", "silver", "everyday"],
-    occasion: ["Wedding", "Anniversary"],
+    tags: ["heart", "engravable", "gold plated"],
+    occasion: [] as string[],
     personalization: {
-      length: { options: [16, 18, 20], default: 18 },
+      engraving: { maxLength: 14, placeholder: "Add a name or date" },
     },
     variants: [
-      { id: "silver-16", metal: "silver", lengthCm: 16, price: 249, inStock: true, stockCount: 4 },
-      { id: "silver-18", metal: "silver", lengthCm: 18, price: 249, inStock: true, stockCount: 7 },
-      { id: "silver-20", metal: "silver", lengthCm: 20, price: 249, inStock: true, stockCount: 3 },
-      { id: "gold-18", metal: "gold", lengthCm: 18, price: 274, inStock: false, madeToOrder: true, productionDays: "10-14 days" },
+      { id: "var_mtou4sd6c2eh4mc2", metal: "gold", lengthCm: 12, price: 99, inStock: true, stockCount: 10 },
     ],
   },
   {
-    id: "p-010",
-    slug: "hind-statement-earrings",
-    name: "Hind Statement Earrings",
-    nameAr: "أقراط هند الفاخرة",
+    id: "real-002",
+    slug: "anniversary-special",
+    name: "Anniversary special",
+    nameAr: null,
     description:
-      "Hand-set with a constellation of pavé stones. The Hind Earrings move like light, made to be noticed.",
-    category: "earrings",
-    basePrice: 219,
-    badge: "new",
-    rating: 4.7,
-    reviewCount: 51,
-    materials: ["925 Sterling Silver", "Pavé CZ"],
-    careInstructions: "Keep dry. Store flat.",
+      "A delicate bracelet engraved with the date that matters most. Hand-finished premium gold plated jewellery — a quiet way to keep an anniversary close.",
+    category: "bracelets",
+    basePrice: 22.25,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1788938107594-adn788.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
     isHypoallergenic: true,
-    tags: ["statement", "silver", "occasion"],
-    occasion: ["Wedding", "Eid"],
+    tags: ["bracelet", "engravable", "gold plated", "anniversary"],
+    occasion: ["Anniversary"],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a date or name" },
+    },
     variants: [
-      { id: "silver", metal: "silver", price: 219, inStock: true, stockCount: 6 },
-      { id: "gold", metal: "gold", price: 244, inStock: true, stockCount: 3 },
+      { id: "var_mttrluay19qrov8z", metal: "gold", lengthCm: 10, price: 22.25, inStock: true, stockCount: 10 },
+      { id: "var_mttrltytt9f5p7hp", metal: "gold", lengthCm: 12, price: 22.25, inStock: true, stockCount: 10 },
     ],
   },
   {
-    id: "p-011",
-    slug: "dana-heart-pendant",
-    name: "Dana Heart Pendant",
-    nameAr: "قلادة دانا القلب",
+    id: "real-003",
+    slug: "hime-02",
+    name: "Hime 02",
+    nameAr: null,
     description:
-      "A small heart, finely engraved. The Dana Pendant is a love letter in metal — keep her name close to yours.",
+      "A minimalist personalised piece from the Hime series, hand-finished in premium gold plated jewellery and engraved just for her.",
     category: "necklaces",
-    basePrice: 149,
-    rating: 4.9,
-    reviewCount: 198,
-    materials: ["18K Rose Gold Vermeil"],
-    careInstructions: "Avoid water. Polish gently.",
+    basePrice: 25,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1788938874818-axzff4.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
     isHypoallergenic: true,
-    tags: ["heart", "engravable", "gift"],
+    tags: ["engravable", "gold plated", "minimal"],
+    occasion: [],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a name" },
+    },
+    variants: [
+      // Order history showed this variant sold at 0 (promotional order) — price set to 25, update in admin if needed.
+      { id: "var_mtts1mmbwdjpv9ug", metal: "gold", price: 25, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-004",
+    slug: "hime-08",
+    name: "Hime 08",
+    nameAr: null,
+    description:
+      "A personalised ring from the Hime series, hand-finished in premium gold plated jewellery and engraved with the name that matters.",
+    category: "rings",
+    basePrice: 25,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1788947221282-tscoj6.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["ring", "engravable", "gold plated"],
+    occasion: [],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a name" },
+    },
+    variants: [
+      { id: "var_mttx0did7j11sdvt", metal: "gold", size: "25", price: 25, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-005",
+    slug: "hime-12",
+    name: "Hime 12",
+    nameAr: null,
+    description:
+      "A personalised necklace from the Hime series, hand-finished in premium gold plated jewellery — made to order, just for her.",
+    category: "necklaces",
+    basePrice: 22.5,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1788947674312-93sgz3.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["necklace", "engravable", "gold plated"],
+    occasion: [],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a name" },
+    },
+    variants: [
+      { id: "var_mttxa800qmqdfm1a", metal: "gold", price: 22.5, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-006",
+    slug: "custom-monogram-date-pendant",
+    name: "Custom Monogram Date Pendant",
+    nameAr: null,
+    description:
+      "A monogram and a date, kept close to the heart. This custom pendant is hand-finished in premium gold plated jewellery and engraved to order.",
+    category: "necklaces",
+    basePrice: 22.8,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789629557024-b4lc9p.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["pendant", "engravable", "gold plated", "monogram"],
+    occasion: ["Anniversary", "Wedding"],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "M&R, 5-12-2005" },
+    },
+    variants: [
+      { id: "var_mu57op3cwdhzd7ts", metal: "gold", lengthCm: 20, price: 22.8, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-007",
+    slug: "ethereal-butterfly-couple-custom-bangle",
+    name: "Ethereal Butterfly Couple Custom Bangle",
+    nameAr: null,
+    description:
+      "A butterfly bangle for two names, two initials, one story. Hand-finished premium gold plated jewellery, engraved for couples.",
+    category: "bracelets",
+    basePrice: 27,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789569075051-09jfv8.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["bangle", "couple", "engravable", "gold plated"],
     occasion: ["Valentine's Day", "Anniversary"],
     personalization: {
-      engraving: { maxLength: 14, placeholder: "Add a message" },
-      length: { options: [40, 45, 50], default: 45 },
+      engraving: { maxLength: 14, placeholder: "Mia & Alex" },
     },
     variants: [
-      { id: "rose-gold-40", metal: "rose-gold", lengthCm: 40, price: 164, inStock: true, stockCount: 7 },
-      { id: "rose-gold-45", metal: "rose-gold", lengthCm: 45, price: 164, inStock: true, stockCount: 11 },
-      { id: "rose-gold-50", metal: "rose-gold", lengthCm: 50, price: 164, inStock: true, stockCount: 5 },
-      { id: "gold-45", metal: "gold", lengthCm: 45, price: 149, inStock: true, stockCount: 6 },
-      { id: "silver-45", metal: "silver", lengthCm: 45, price: 124, inStock: true, stockCount: 8 },
+      { id: "var_mu478v0dxp4riav4", metal: "gold", lengthCm: 10, price: 27, inStock: true, stockCount: 10 },
     ],
   },
   {
-    id: "p-012",
-    slug: "amal-stacking-rings",
-    name: "Amal Stacking Rings",
-    nameAr: "خواتم أمل للتراكم",
+    id: "real-008",
+    slug: "rolex-customized-name-bracelet",
+    name: "Rolex Customized Name Bracelet",
+    nameAr: null,
     description:
-      "A trio of fine bands, made to wear together. Hand-finished in 18K gold with the option to engrave a single letter on each.",
-    category: "rings",
-    basePrice: 189,
-    rating: 4.8,
-    reviewCount: 67,
-    materials: ["18K Gold Vermeil"],
-    careInstructions: "Remove before washing hands.",
+      "A bold name bracelet with a premium plated finish, engraved with the name of your choice. Made to order, made for her.",
+    category: "bracelets",
+    basePrice: 29.32,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789575350698-n83p36.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
     isHypoallergenic: true,
-    tags: ["stacking", "engravable", "18K"],
-    occasion: ["Birthday", "Anniversary", "Just Because"],
+    tags: ["bracelet", "name", "engravable", "gold plated"],
+    occasion: ["Birthday", "Just Because"],
     personalization: {
-      engraving: { maxLength: 1, placeholder: "A" },
+      engraving: { maxLength: 14, placeholder: "Add a name" },
     },
     variants: [
-      { id: "gold-5", metal: "gold", size: "5", price: 189, inStock: true, stockCount: 4 },
-      { id: "gold-6", metal: "gold", size: "6", price: 189, inStock: true, stockCount: 7 },
-      { id: "gold-7", metal: "gold", size: "7", price: 189, inStock: true, stockCount: 6 },
-      { id: "gold-8", metal: "gold", size: "8", price: 189, inStock: true, stockCount: 3 },
-      { id: "rose-gold-7", metal: "rose-gold", size: "7", price: 204, inStock: false, madeToOrder: true, productionDays: "7-10 days" },
+      { id: "75a03099-85e7-4aa0-8fe7-21f172f5800a", metal: "blue", lengthCm: 12, price: 29.32, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-009",
+    slug: "signature-arabic-nameplate-bracelet",
+    name: "Signature Arabic Nameplate Bracelet",
+    nameAr: "سوار بالاسم العربي",
+    description:
+      "Her name in elegant Arabic script, hand-finished as premium gold plated jewellery. A signature piece, made to order.",
+    category: "bracelets",
+    basePrice: 25,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789579075248-kqbvlj.jpg",
+    ],
+    materials: ["Gold Plated", "Silver Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["arabic", "nameplate", "engravable", "gold plated"],
+    occasion: ["Eid", "Birthday"],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "اسمكِ هنا" },
+    },
+    variants: [
+      { id: "var_mu4dmz8ro92gdo7s", metal: "gold", lengthCm: 12, price: 25, inStock: true, stockCount: 10 },
+      { id: "var_mu4dmzle4menbv6z", metal: "silver", lengthCm: 12, price: 25, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-010",
+    slug: "sweetheart-layered-custom-necklace",
+    name: "Sweetheart Layered Custom Necklace",
+    nameAr: null,
+    description:
+      "A layered necklace with a sweetheart charm, engraved with her name. Hand-finished premium gold plated jewellery, made to order.",
+    category: "necklaces",
+    basePrice: 21.31,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789582168374-m2al0n.png",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["layered", "heart", "engravable", "gold plated"],
+    occasion: ["Valentine's Day", "Anniversary"],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a name" },
+    },
+    variants: [
+      { id: "f3a99312-9b3c-4905-9136-77fb3a1e592a", metal: "gold", lengthCm: 18, price: 21.31, inStock: true, stockCount: 10 },
+    ],
+  },
+  {
+    id: "real-011",
+    slug: "royal-custom-name-necklace",
+    name: "Royal Custom Name Necklace",
+    nameAr: null,
+    description:
+      "Her name in a royal script, hand-finished as premium gold plated jewellery. A custom necklace made just for her.",
+    category: "necklaces",
+    basePrice: 21.7,
+    badge: null,
+    rating: 0,
+    reviewCount: 0,
+    images: [
+      "https://ibdyreoqctdixnuwyrfe.supabase.co/storage/v1/object/public/product-images/products/1789586359219-vapom7.jpg",
+    ],
+    materials: ["Gold Plated"],
+    careInstructions:
+      "Avoid contact with water, perfume and lotion. Polish gently with the included cloth.",
+    isHypoallergenic: true,
+    tags: ["name", "necklace", "engravable", "gold plated"],
+    occasion: ["Birthday", "Just Because"],
+    personalization: {
+      engraving: { maxLength: 14, placeholder: "Add a name" },
+    },
+    variants: [
+      // Order history referenced Hime 12's variant id for this product too — assigned a fresh id here since variant ids must be unique.
+      { id: "var_royal-custom-name-necklace-gold-20", metal: "gold", lengthCm: 20, price: 21.7, inStock: true, stockCount: 10 },
     ],
   },
 ];
@@ -309,14 +353,12 @@ let variantCount = 0;
 
 async function seed() {
   await db.transaction(async (tx) => {
-    // Idempotent: clear seed-managed tables first (children cascade from products)
-    await tx.delete(productVariants);
-    await tx.delete(products);
+    // Idempotent: clear ONLY seed-managed product ids (children cascade).
+    // Never a blanket delete — live catalogue data must survive re-seeds.
+    await tx.delete(products).where(inArray(products.id, SEED_PRODUCT_IDS));
     await tx.delete(promoCodes);
 
     for (const p of PRODUCTS_SEED) {
-      const imageMetal = p.variants[0]?.metal || "gold";
-      const label = p.name.split(" ")[0];
       await tx.insert(products).values({
         id: p.id,
         slug: p.slug,
@@ -326,14 +368,14 @@ async function seed() {
         descriptionAr: null,
         category: p.category,
         basePrice: p.basePrice,
-        compareAtPrice: (p as { compareAtPrice?: number }).compareAtPrice ?? null,
-        images: [svgFor(label, imageMetal)],
+        compareAtPrice: null,
+        images: p.images,
         badge: p.badge || null,
         rating: p.rating,
         reviewCount: p.reviewCount,
         materials: p.materials,
         careInstructions: p.careInstructions,
-        isHalalFriendly: !!p.isHalalFriendly,
+        isHalalFriendly: false,
         isHypoallergenic: !!p.isHypoallergenic,
         tags: p.tags,
         occasion: p.occasion || [],
@@ -344,16 +386,15 @@ async function seed() {
 
       for (const v of p.variants as any[]) {
         await tx.insert(productVariants).values({
-          id: `${p.id}-${v.id}`,
+          id: v.id,
           productId: p.id,
           metal: v.metal,
           lengthCm: v.lengthCm ?? null,
           size: v.size ?? null,
-          // All metal finishes are priced the same.
-          price: p.basePrice,
+          price: v.price,
           inStock: !!v.inStock,
-          madeToOrder: !!v.madeToOrder,
-          productionDays: v.productionDays || null,
+          madeToOrder: false,
+          productionDays: null,
           stockCount: v.stockCount || 0,
         });
         variantCount++;

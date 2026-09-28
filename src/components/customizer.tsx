@@ -6,8 +6,6 @@ import {
   Share2,
   Heart,
   Save,
-  ShoppingBag,
-  ArrowRight,
   Sparkles,
   Check,
 } from "lucide-react";
@@ -36,9 +34,9 @@ const BASE_OPTIONS: { id: ProductCategory; label: string; image: string }[] = [
 
 // All metal finishes are priced the same.
 const METALS: { id: MetalFinish; label: string; price: number; swatch: string }[] = [
-  { id: "gold", label: "18K Gold", price: 0, swatch: "linear-gradient(135deg, #E8D9B8, #A88A4D)" },
+  { id: "gold", label: "Gold Plated", price: 0, swatch: "linear-gradient(135deg, #E8D9B8, #A88A4D)" },
   { id: "rose-gold", label: "Rose Gold", price: 0, swatch: "linear-gradient(135deg, #F4D4C4, #B8866F)" },
-  { id: "silver", label: "925 Silver", price: 0, swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
+  { id: "silver", label: "Silver Plated", price: 0, swatch: "linear-gradient(135deg, #F0F0F0, #A8A8A8)" },
   { id: "blue", label: "Blue", price: 0, swatch: "linear-gradient(135deg, #4A7BC8, #1B3A6B)" },
   { id: "black", label: "Black", price: 0, swatch: "linear-gradient(135deg, #4A4A4A, #111111)" },
 ];
@@ -339,41 +337,38 @@ export function Customizer() {
           <div className="flex flex-col gap-3 pt-4 sm:flex-row sm:items-center">
             <Button
               variant="outline"
-              onClick={() => setStep(Math.max(0, step - 1))}
-              disabled={step === 0}
+              disabled
               className="rounded-full"
             >
               Back
             </Button>
             <Button
-              onClick={() => setStep(Math.min(STEPS.length - 1, step + 1))}
-              disabled={step === STEPS.length - 1}
-              className="flex-1 rounded-full bg-navy text-cream hover:bg-navy/90"
+              disabled
+              className="flex-1 justify-center rounded-full bg-navy text-cream"
             >
-              Continue <ArrowRight className="ms-2 size-3.5" />
+              Coming Soon
             </Button>
           </div>
 
           {step === STEPS.length - 1 && (
             <div className="grid gap-3 pt-2 sm:grid-cols-2">
               <Button
-                onClick={handleAddToCart}
-                className="w-full rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
+                disabled
+                className="w-full justify-center rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream"
               >
-                <ShoppingBag className="me-2 size-4" /> Add to cart ·{" "}
-                {formatPrice(totalPrice, currency, language)}
+                Coming Soon
               </Button>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  onClick={handleSave}
+                  disabled
                   className="flex-1 rounded-full text-xs uppercase tracking-widest"
                 >
                   <Save className="me-2 size-3.5" /> Save
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={handleShare}
+                  disabled
                   className="flex-1 rounded-full text-xs uppercase tracking-widest"
                 >
                   <Share2 className="me-2 size-3.5" /> Share

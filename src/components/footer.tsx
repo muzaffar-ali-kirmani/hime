@@ -31,8 +31,6 @@ export function Footer() {
         { label: "Necklaces", href: "/shop/necklaces" },
         { label: "Bracelets", href: "/shop/bracelets" },
         { label: "Rings", href: "/shop/rings" },
-        { label: "Earrings", href: "/shop/earrings" },
-        { label: "Anklets", href: "/shop/anklets" },
       ],
     },
     {
