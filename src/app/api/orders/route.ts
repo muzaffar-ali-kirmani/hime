@@ -25,7 +25,9 @@ const orderItemSchema = z.object({
 });
 
 const checkoutSchema = z.object({
-  email: z.string().email(),
+  // Guest email is no longer collected at checkout; kept optional for
+  // backwards compatibility with older clients.
+  email: z.string().email().optional(),
   items: z.array(orderItemSchema).min(1),
   shippingName: z.string().min(1),
   shippingPhone: z.string().min(5),
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
     const data = checkoutSchema.parse(body);
 
     const user = await getCurrentUser();
-    if (user && user.email !== data.email) {
+    if (user && data.email && user.email !== data.email) {
       return apiError("Email does not match signed-in account", 400);
     }
 
@@ -163,7 +165,7 @@ export async function POST(req: Request) {
       id: orderId,
       orderNumber,
       userId: user?.id || null,
-      guestEmail: user ? null : data.email,
+      guestEmail: user ? null : data.email || null,
       status: "pending",
       paymentStatus: "pending", // COD — collected by courier on delivery
       paymentMethod: "cod",

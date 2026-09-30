@@ -14,19 +14,7 @@ import { formatPrice, COUNTRIES, CURRENCIES } from "@/lib/locale";
 import { ShopLayout } from "@/components/shop-layout";
 import { cn } from "@/lib/utils";
 import { api } from "@/lib/api-client";
-import dynamic from "next/dynamic";
-import type { LatLng } from "@/components/map-picker";
 import { toast } from "sonner";
-
-// Leaflet touches `window` at import time — load the map client-side only so
-// the /checkout page can be prerendered at build time.
-const MapPicker = dynamic(
-  () => import("@/components/map-picker").then((m) => m.MapPicker),
-  { ssr: false, loading: () => <div className="h-64 rounded-xl border border-border bg-secondary/40" /> }
-);
-
-const googleMapsLink = (p: LatLng) => `https://www.google.com/maps?q=${p.lat},${p.lng}`;
-
 // Hidden for now — re-enable to restore card / Apple Pay / Tabby / Tamara
 // { id: "card", label: "Credit / Debit Card", icon: CreditCard },
 // { id: "apple", label: "Apple Pay", icon: Apple },
@@ -41,24 +29,18 @@ export function CheckoutView() {
   const { currency, country, setCountry, language, t } = useLocale();
   const [step, setStep] = useState<"address" | "payment" | "review">("address");
   const [payment, setPayment] = useState("cod");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [isGuest, setIsGuest] = useState(true);
   const [orderComplete, setOrderComplete] = useState(false);
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
+    fullName: "",
     phone: "",
-    address1: "",
-    address2: "",
+    address: "",
     city: COUNTRIES[country].cities[0],
-    area: "",
     notes: "",
     saveInfo: true,
   });
-  const [pin, setPin] = useState<LatLng | null>(null);
 
   const discountedSubtotal = cartSubtotal - cartBulkDiscount;
   const shipping =
@@ -91,18 +73,13 @@ export function CheckoutView() {
       }));
 
       const { orderNumber } = await api.createOrder({
-        email: guestEmail,
         items,
-        shippingName: `${form.firstName} ${form.lastName}`.trim(),
+        shippingName: form.fullName,
         shippingPhone: form.phone,
-        shippingAddress1: form.address1,
-        shippingAddress2: form.address2 || undefined,
+        shippingAddress1: form.address,
         shippingCity: form.city,
-        shippingArea: form.area || undefined,
         shippingCountry: country,
         shippingNotes: form.notes || undefined,
-        shippingLat: pin?.lat,
-        shippingLng: pin?.lng,
         paymentMethod: payment,
         currency,
       });
@@ -201,59 +178,15 @@ export function CheckoutView() {
 
         <div className="grid gap-8 lg:grid-cols-[1.5fr_1fr]">
           <div className="space-y-6">
-            <div className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-sm">
-              <button
-                onClick={() => setIsGuest(true)}
-                className={cn(
-                  "flex-1 rounded-full px-4 py-2 transition-all",
-                  isGuest ? "bg-navy text-cream" : "text-navy"
-                )}
-              >
-                Guest checkout
-              </button>
-              <button
-                onClick={() => setIsGuest(false)}
-                className={cn(
-                  "flex-1 rounded-full px-4 py-2 transition-all",
-                  !isGuest ? "bg-navy text-cream" : "text-navy"
-                )}
-              >
-                Sign in
-              </button>
-            </div>
-
-            {isGuest && (
-              <div className="rounded-2xl border border-border bg-card p-5">
-                <Label htmlFor="email" className="text-xs uppercase tracking-widest">
-                  Email for order updates
-                </Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={guestEmail}
-                  onChange={(e) => setGuestEmail(e.target.value)}
-                  placeholder="you@example.com"
-                  className="mt-2 rounded-full"
-                />
-              </div>
-            )}
-
             {step === "address" && (
               <div className="space-y-4 rounded-2xl border border-border bg-card p-6">
                 <h2 className="font-serif text-2xl text-navy">Shipping address</h2>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <FormField
-                    label="First name"
-                    value={form.firstName}
-                    onChange={(v) => setForm({ ...form, firstName: v })}
-                  />
-                  <FormField
-                    label="Last name"
-                    value={form.lastName}
-                    onChange={(v) => setForm({ ...form, lastName: v })}
-                  />
-                </div>
+                <FormField
+                  label="Full name"
+                  value={form.fullName}
+                  onChange={(v) => setForm({ ...form, fullName: v })}
+                />
                 <FormField
                   label="Phone number"
                   value={form.phone}
@@ -287,20 +220,10 @@ export function CheckoutView() {
                 </div>
 
                 <FormField
-                  label="Area / District"
-                  value={form.area}
-                  onChange={(v) => setForm({ ...form, area: v })}
-                  placeholder="e.g. Downtown, Marina"
-                />
-                <FormField
-                  label="Street address"
-                  value={form.address1}
-                  onChange={(v) => setForm({ ...form, address1: v })}
-                />
-                <FormField
-                  label="Building / Apartment (optional)"
-                  value={form.address2}
-                  onChange={(v) => setForm({ ...form, address2: v })}
+                  label="Address"
+                  value={form.address}
+                  onChange={(v) => setForm({ ...form, address: v })}
+                  placeholder="Street, area, building, apartment…"
                 />
                 <div>
                   <Label className="text-xs uppercase tracking-widest">
@@ -315,20 +238,8 @@ export function CheckoutView() {
                   />
                 </div>
 
-                <MapPicker country={country} value={pin} onChange={setPin} />
-
                 <Button
-                  onClick={() => {
-                    // Delivery pin is mandatory — couriers in the Gulf rely on
-                    // exact locations far more than street addresses.
-                    if (!pin) {
-                      toast.error(
-                        "Please add a delivery pin — tap the map or use \"Use my location\"."
-                      );
-                      return;
-                    }
-                    setStep("payment");
-                  }}
+                  onClick={() => setStep("payment")}
                   className="w-full rounded-full bg-navy py-6 text-xs uppercase tracking-widest text-cream hover:bg-navy/90"
                 >
                   Continue to payment
@@ -406,28 +317,13 @@ export function CheckoutView() {
                 <div className="space-y-2 text-sm">
                   <p className="text-navy/70">Ship to:</p>
                   <p className="text-navy">
-                    {form.firstName} {form.lastName}
+                    {form.fullName}
                     <br />
-                    {form.address1}
-                    {form.address2 ? `, ${form.address2}` : ""}
+                    {form.address}
                     <br />
-                    {form.area ? `${form.area}, ` : ""}
                     {form.city}, {COUNTRIES[country].name}
                     <br />
                     {form.phone}
-                    {pin && (
-                      <>
-                        <br />
-                        <a
-                          href={googleMapsLink(pin)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-xs text-gold hover:underline"
-                        >
-                          📍 View delivery pin on Google Maps
-                        </a>
-                      </>
-                    )}
                   </p>
                 </div>
                 <div className="space-y-2 text-sm">

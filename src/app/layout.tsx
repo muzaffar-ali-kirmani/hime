@@ -19,6 +19,10 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [{ url: "/hime_jewels_favicon_512.png", type: "image/png", sizes: "512x512" }],
+    apple: [{ url: "/hime_jewels_favicon_512.png" }],
+  },
   title: "Hime — Just Made For You | Premium Personalised Jewellery",
   description:
     "Handcrafted personalised jewellery made for her story. Necklaces, bracelets, rings and earrings in gold plated jewellery. Ships across the Gulf.",
